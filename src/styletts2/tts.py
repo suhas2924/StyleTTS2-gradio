@@ -13,6 +13,8 @@ torch.manual_seed(0)
 torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 
+from dp.phonemizer import Phonemizer
+
 import random
 random.seed(0)
 
@@ -70,6 +72,9 @@ def segment_text(text):
     )
     segments = splitter.split_text(text)
     return segments
+
+# global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True,  with_stress=True)
+phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
 import phonemizer
 global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True,  with_stress=True)
