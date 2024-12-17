@@ -387,7 +387,7 @@ class StyleTTS2:
         """
         text = text.strip()
         text = text.replace('"', '')
-        phonemized_text = global_phonemizer.phonemize(text)
+        phonemized_text = global_phonemizer.phonemize([text])
         ps = phonemized_text.split()
         phoneme_string = ' '.join(ps)
         phoneme_string = phoneme_string.replace('``', '"')
