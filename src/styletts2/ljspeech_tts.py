@@ -33,7 +33,7 @@ from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSch
 
 
 LJSPEECH_CHECKPOINT_URL = "https://huggingface.co/yl4579/StyleTTS2-LJSpeech/resolve/main/Models/LJSpeech/epoch_2nd_00100.pth"
-LJSPEECH_CONFIG_URL = "https://huggingface.co/yl4579/StyleTTS2-LibriTTS/resolve/main/Models/LibriTTS/config.yml?download=true"
+LJSPEECH_CONFIG_URL = "https://huggingface.co/yl4579/StyleTTS2-LJSpeech/resolve/main/Models/LJSpeech/config.yml?download=true"
 
 ASR_CHECKPOINT_URL = "https://github.com/yl4579/StyleTTS2/raw/main/Utils/ASR/epoch_00080.pth"
 ASR_CONFIG_URL = "https://huggingface.co/yl4579/StyleTTS2-LJSpeech/resolve/main/Models/LJSpeech/config.yml"
@@ -101,18 +101,18 @@ class StyleTTS2:
         """
         Loads model to prepare for inference. Loads checkpoints from provided paths or from local cache (or downloads
         default checkpoints to local cache if not present).
-        :param model_path: Path to LibriTTS StyleTTS2 model checkpoint (TODO: LJSpeech model support)
-        :param config_path: Path to LibriTTS StyleTTS2 model config JSON (TODO: LJSpeech model support)
+        :param model_path: Path to LJSpeech StyleTTS2 model checkpoint (TODO: LJSpeech model support)
+        :param config_path: Path to LJSpeech StyleTTS2 model config JSON (TODO: LJSpeech model support)
         :return:
         """
 
         if not model_path or not Path(model_path).exists():
             print("Invalid or missing model checkpoint path. Loading default model...")
-            model_path = cached_path(LIBRI_TTS_CHECKPOINT_URL)
+            model_path = cached_path(LJSPEECH_CHECKPOINT_URL)
 
         if not config_path or not Path(config_path).exists():
             print("Invalid or missing config path. Loading default config...")
-            config_path = cached_path(LIBRI_TTS_CONFIG_URL)
+            config_path = cached_path(LJSPEECH_CONFIG_URL)
 
         self.config = yaml.safe_load(open(config_path))
 
