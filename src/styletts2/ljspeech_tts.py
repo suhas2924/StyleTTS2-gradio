@@ -33,7 +33,7 @@ from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSch
 
 
 LJSPEECH_CHECKPOINT_URL = "https://huggingface.co/yl4579/StyleTTS2-LJSpeech/resolve/main/Models/LJSpeech/epoch_2nd_00100.pth"
-LJSPEECH_CONFIG_URL = "https://huggingface.co/yl4579/StyleTTS2-LJSpeech/resolve/main/Models/LJSpeech/config.yml?download=true"
+LJSPEECH_CONFIG_URL = "https://huggingface.co/yl4579/StyleTTS2-LibriTTS/resolve/main/Models/LibriTTS/config.yml?download=true"
 
 ASR_CHECKPOINT_URL = "https://github.com/yl4579/StyleTTS2/raw/main/Utils/ASR/epoch_00080.pth"
 ASR_CONFIG_URL = "https://huggingface.co/yl4579/StyleTTS2-LJSpeech/resolve/main/Models/LJSpeech/config.yml"
