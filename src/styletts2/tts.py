@@ -64,13 +64,8 @@ def preprocess(wave):
 
 
 def segment_text(text):
-    splitter = RecursiveCharacterTextSplitter(
-        separators=["\n\n", "\n", " "],
-        chunk_size=SINGLE_INFERENCE_MAX_LEN,
-        chunk_overlap=0,
-        length_function=len,
-    )
-    segments = splitter.split_text(text)
+    # Split the text based on the pattern of two or more newlines or blank lines
+    segments = re.split(r'(?:\n\s*\n|\n{2,})', text)
     return segments
 
 # global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True,  with_stress=True)
