@@ -81,10 +81,10 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 # phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
 class StyleTTS2:
-    def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='gruut'):
+    def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
         self.model = None
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.phoneme_converter = PhonemeConverterFactory.load_phoneme_converter(phoneme_converter)
+        self.phoneme_converter = global_phonemizer
         self.config = None
         self.model_params = None
         self.model = self.load_model(model_path=model_checkpoint_path, config_path=config_path)
