@@ -35,6 +35,9 @@ from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSch
 LIBRI_TTS_CHECKPOINT_URL = "https://huggingface.co/yl4579/StyleTTS2-LibriTTS/resolve/main/Models/LibriTTS/epochs_2nd_00020.pth"
 LIBRI_TTS_CONFIG_URL = "https://huggingface.co/yl4579/StyleTTS2-LibriTTS/resolve/main/Models/LibriTTS/config.yml?download=true"
 
+LJSPEECH_CHECKPOINT_URL = "https://huggingface.co/yl4579/StyleTTS2-LJSpeech/resolve/main/Models/LJSpeech/epoch_2nd_00100.pth"
+LJSPEECH_CONFIG_URL = "https://huggingface.co/yl4579/StyleTTS2-LJSpeech/resolve/main/Models/LJSpeech/config.yml?download=true"
+
 ASR_CHECKPOINT_URL = "https://github.com/yl4579/StyleTTS2/raw/main/Utils/ASR/epoch_00080.pth"
 ASR_CONFIG_URL = "https://github.com/yl4579/StyleTTS2/raw/main/Utils/ASR/config.yml"
 F0_CHECKPOINT_URL = "https://github.com/yl4579/StyleTTS2/raw/main/Utils/JDC/bst.t7"
@@ -110,9 +113,17 @@ class StyleTTS2:
             print("Invalid or missing model checkpoint path. Loading default model...")
             model_path = cached_path(LIBRI_TTS_CHECKPOINT_URL)
 
+        if not model_path or not Path(model_path).exists():
+            print("Invalid or missing model checkpoint path. Loading default model...")
+            model_path = cached_path(LJSPEECH_CHECKPOINT_URL)
+
         if not config_path or not Path(config_path).exists():
             print("Invalid or missing config path. Loading default config...")
             config_path = cached_path(LIBRI_TTS_CONFIG_URL)
+
+        if not config_path or not Path(config_path).exists():
+            print("Invalid or missing config path. Loading default config...")
+            config_path = cached_path(LJSPEECH_CONFIG_URL)
 
         self.config = yaml.safe_load(open(config_path))
 
