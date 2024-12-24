@@ -1,7 +1,6 @@
 from nltk.tokenize import word_tokenize
 import nltk
 nltk.download('punkt')
-nltk.download('punkt_tab')
 
 from pathlib import Path
 import librosa
@@ -13,15 +12,13 @@ torch.manual_seed(0)
 torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 
-from dp.phonemizer import Phonemizer
-
 import random
 random.seed(0)
 
 import numpy as np
 np.random.seed(0)
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from txtsplit import txtsplit
 import yaml
 
 from . import models
@@ -64,24 +61,15 @@ def preprocess(wave):
 
 
 def segment_text(text):
-    # Split the text based on the pattern of two or more newlines or blank lines
-    text_segments = re.split(r'(?:\n\s*\n|\n{2,})', text)
-    
-    # Return paragraphs with extra spaces removed within each paragraph
-    return [text_segment.strip() for text_segment in text_segments if text_segment.strip()]
+    segments = txtsplit(text, desired_length=100, max_length=200)
+    return segments
 
-# global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True,  with_stress=True)
-phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
-
-import phonemizer
-global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True,  with_stress=True)
-# phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
 class StyleTTS2:
-    def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
+    def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='gruut'):
         self.model = None
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.phoneme_converter = global_phonemizer
+        self.phoneme_converter = PhonemeConverterFactory.load_phoneme_converter(phoneme_converter)
         self.config = None
         self.model_params = None
         self.model = self.load_model(model_path=model_checkpoint_path, config_path=config_path)
@@ -126,19 +114,21 @@ class StyleTTS2:
 
         # load pretrained F0 model
         F0_path = self.config.get('F0_path', False)
-        if F0_path or not Path(F0_path).exists():
+        if not F0_path or not Path(F0_path).exists():
             print("Invalid F0 model path. Loading default model...")
             F0_path = cached_path(F0_CHECKPOINT_URL)
         pitch_extractor = models.load_F0_models(F0_path)
 
         # load BERT model
-        BERT_dir_path = self.config.get('PLBERT_dir', False)  # Directory at BERT_dir_path should contain PLBERT config.yml AND checkpoint
-        if not BERT_dir_path or not Path(BERT_dir_path).exists():
-            BERT_config_path = cached_path(BERT_CONFIG_URL)
-            BERT_checkpoint_path = cached_path(BERT_CHECKPOINT_URL)
-            plbert = load_plbert(None, config_path=BERT_config_path, checkpoint_path=BERT_checkpoint_path)
-        else:
-            plbert = load_plbert(BERT_dir_path)
+        BERT_config = self.config.get('PLBERT_config', False)
+        if not BERT_config or not Path(BERT_config).exists():
+            print("Invalid BERT config path. Loading default config...")
+            BERT_config = cached_path(BERT_CONFIG_URL)
+        BERT_path = self.config.get('PLBERT_path', False)
+        if not BERT_path or not Path(BERT_path).exists():
+            print("Invalid BERT model checkpoint path. Loading default model...")
+            BERT_path = cached_path(BERT_CHECKPOINT_URL)
+        plbert = load_plbert(None, config_path=BERT_config, checkpoint_path=BERT_path)
 
         self.model_params = utils.recursive_munch(self.config['model_params'])
         model = models.build_model(self.model_params, text_aligner, pitch_extractor, plbert)
@@ -199,7 +189,7 @@ class StyleTTS2:
                   diffusion_steps=5,
                   embedding_scale=1,
                   ref_s=None,
-                  use_gruut=False):
+                  phonemize=True):
         """
         Text-to-speech function
         :param text: Input text to turn into speech.
@@ -211,6 +201,7 @@ class StyleTTS2:
         :param diffusion_steps: The more the steps, the more diverse the samples are, with the cost of speed.
         :param embedding_scale: Higher scale means style is more conditional to the input text and hence more emotional.
         :param ref_s: Pre-computed style vector to pass directly.
+        :param phonemize: Phonemize text. Defaults to True.
         :return: audio data as a Numpy array (will also create the WAV file if output_wav_file was set).
         """
 
@@ -224,7 +215,8 @@ class StyleTTS2:
                                        beta=beta,
                                        diffusion_steps=diffusion_steps,
                                        embedding_scale=embedding_scale,
-                                       ref_s=ref_s)
+                                       ref_s=ref_s,
+                                       phonemize=phonemize)
 
         if ref_s is None:
             # default to clone https://styletts2.github.io/wavs/LJSpeech/OOD/GT/00001.wav voice from LibriVox (public domain)
@@ -233,14 +225,18 @@ class StyleTTS2:
                 target_voice_path = cached_path(DEFAULT_TARGET_VOICE_URL)
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
-        text = text.strip()
-        text = text.replace('"', '')
-        ps = global_phonemizer.phonemize([text])
-        ps = word_tokenize(ps[0])
-        ps = ' '.join(ps)
+        # TODO: Clarifying text pre-processing
+        if phonemize:
+            text = text.strip()
+            text = text.replace('"', '')
+            phonemized_text = self.phoneme_converter.phonemize(text)
+            ps = word_tokenize(phonemized_text)
+            phoneme_string = ' '.join(ps)
+        else:
+            phoneme_string = text
 
-        textcleaner = TextCleaner()
-        tokens = textcleaner(ps)
+        textcleaner = TextCleaner()  # TODO: look into removing
+        tokens = textcleaner(phoneme_string)
         tokens.insert(0, 0)
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
 
@@ -316,7 +312,7 @@ class StyleTTS2:
                        diffusion_steps=5,
                        embedding_scale=1,
                        ref_s=None,
-                       use_gruut=False):
+                       phonemize=True):
         """
         Inference for longform text. Used automatically in inference() when needed.
         :param text: Input text to turn into speech.
@@ -329,6 +325,7 @@ class StyleTTS2:
         :param diffusion_steps: The more the steps, the more diverse the samples are, with the cost of speed.
         :param embedding_scale: Higher scale means style is more conditional to the input text and hence more emotional.
         :param ref_s: Pre-computed style vector to pass directly.
+        :param phonemize: Phonemize text. Defaults to True
         :return: concatenated audio data as a Numpy array (will also create the WAV file if output_wav_file was set).
         """
 
@@ -353,7 +350,8 @@ class StyleTTS2:
                                                                  beta=beta,
                                                                  t=t,
                                                                  diffusion_steps=diffusion_steps,
-                                                                 embedding_scale=embedding_scale)
+                                                                 embedding_scale=embedding_scale,
+                                                                 phonemize=phonemize)
             segments.append(segment_output)
         output = np.concatenate(segments)
         if output_wav_file:
@@ -369,7 +367,7 @@ class StyleTTS2:
                                t=0.7,
                                diffusion_steps=5,
                                embedding_scale=1,
-                               use_gruut=False):
+                               phonemize=True):
         """
         Performs inference for segment of longform text; see long_inference()
         :param text: Input text
@@ -380,16 +378,19 @@ class StyleTTS2:
         :param t: Determines consistency of style across inference segments (0 lowest, 1 highest)
         :param diffusion_steps: The more the steps, the more diverse the samples are, with the cost of speed.
         :param embedding_scale: Higher scale means style is more conditional to the input text and hence more emotional.
+        :param phonemize: Phonemize text? If not, expects that text is already phonemized
         :return: audio data as a Numpy array
         """
-        text = text.strip()
-        text = text.replace('"', '')
-        phonemized_text = global_phonemizer.phonemize([text])
-        phonemized_text = ' '.join(phonemized_text)  # Join the list into a single string                           
-        ps = phonemized_text.split()
-        phoneme_string = ' '.join(ps)
-        phoneme_string = phoneme_string.replace('``', '"')
-        phoneme_string = phoneme_string.replace("''", '"')
+        if phonemize:
+            text = text.strip()
+            text = text.replace('"', '')
+            phonemized_text = self.phoneme_converter.phonemize(text)
+            ps = word_tokenize(phonemized_text)
+            phoneme_string = ' '.join(ps)
+            phoneme_string = phoneme_string.replace('``', '"')
+            phoneme_string = phoneme_string.replace("''", '"')
+        else:
+            phoneme_string = text
 
         textcleaner = TextCleaner()
         tokens = textcleaner(phoneme_string)
@@ -459,3 +460,4 @@ class StyleTTS2:
                                 F0_pred, N_pred, ref.squeeze().unsqueeze(0))
 
         return out.squeeze().cpu().numpy()[..., :-100], s_pred
+                                    
