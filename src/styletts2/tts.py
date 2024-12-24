@@ -15,6 +15,8 @@ torch.backends.cudnn.deterministic = True
 
 from dp.phonemizer import Phonemizer
 
+from phonemizer.backend import EspeakBackend
+
 import random
 random.seed(0)
 
@@ -118,10 +120,10 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 # phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
 class StyleTTS2:
-    def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='phonemizer'):
+    def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
         self.model = None
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.phoneme_converter = phonemizer
+        self.phoneme_converter = global_phonemizer
         self.config = None
         self.model_params = None
         self.model = self.load_model(model_path=model_checkpoint_path, config_path=config_path)
@@ -275,7 +277,7 @@ class StyleTTS2:
 
         text = text.strip()
         text = text.replace('"', '')
-        ps = phonemizer.phonemize([text])
+        ps = global_phonemizer.phonemize([text])
         ps = word_tokenize(ps[0])
         ps = ' '.join(ps)
 
@@ -421,7 +423,7 @@ class StyleTTS2:
         """
         text = text.strip()
         text = text.replace('"', '')
-        phonemized_text = phonemizer.phonemize([text])
+        phonemized_text = global_phonemizer.phonemize([text])
         phonemized_text = ' '.join(phonemized_text)  # Join the list into a single string                           
         ps = phonemized_text.split()
         phoneme_string = ' '.join(ps)
