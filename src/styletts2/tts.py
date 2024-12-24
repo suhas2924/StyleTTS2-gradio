@@ -65,8 +65,10 @@ def preprocess(wave):
 
 def segment_text(text):
     # Split the text based on the pattern of two or more newlines or blank lines
-    segments = re.split(r'(?:\n\s*\n|\n{2,})', text)
-    return segments
+    text_segments = re.split(r'(?:\n\s*\n|\n{2,})', text)
+    
+    # Return paragraphs with extra spaces removed within each paragraph
+    return [text_segment.strip() for text_segment in text_segments if text_segment.strip()]
 
 # global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True,  with_stress=True)
 phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
