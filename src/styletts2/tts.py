@@ -23,14 +23,13 @@ random.seed(0)
 import numpy as np
 np.random.seed(0)
 
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 import yaml
 
 from . import models
 from . import utils
 from .text_utils import TextCleaner
 from .Utils.PLBERT.util import load_plbert
-from .phoneme import PhonemeConverterFactory
-from gruut import sentences, g2p
 from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSchedule
 
 
@@ -64,13 +63,6 @@ def preprocess(wave):
     mel_tensor = (torch.log(1e-5 + mel_tensor.unsqueeze(0)) - mean) / std
     return mel_tensor
 
-
-def preprocess_to_ignore_quotes(text):
-    text = text.replace('\r\n', '\n').replace('\r', '\n')
-    text = re.sub(r'[“”"]', '', text)  # Remove both fancy quotes and normal quotes
-    text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
-    return text
-    
 SPLIT_WORDS = [
     "but", "however", "nevertheless", "yet", "still",
     "therefore", "thus", "hence", "consequently",
@@ -89,7 +81,7 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     print ("Cleaned Text", text)
     return text
-    
+
 def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
     if len(text.encode('utf-8')) <= max_chars:
         return [text]
@@ -185,7 +177,8 @@ def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
         batches.append(current_batch)
 
     return batches
-    
+
+
 # global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True,  with_stress=True)
 phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
@@ -194,10 +187,10 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 # phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
 class StyleTTS2:
-    def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='gruut'):
+    def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
         self.model = None
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.phoneme_converter = PhonemeConverterFactory.load_phoneme_converter(phoneme_converter)
+        self.phoneme_converter = global_phonemizer
         self.config = None
         self.model_params = None
         self.model = self.load_model(model_path=model_checkpoint_path, config_path=config_path)
@@ -208,6 +201,7 @@ class StyleTTS2:
             sigma_schedule=KarrasSchedule(sigma_min=0.0001, sigma_max=3.0, rho=9.0), # empirical parameters
             clamp=False
         )
+
 
     def load_model(self, model_path=None, config_path=None):
         """
@@ -314,7 +308,7 @@ class StyleTTS2:
                   diffusion_steps=5,
                   embedding_scale=1,
                   ref_s=None,
-                  phonemize=True):
+                  use_gruut=False):
         """
         Text-to-speech function
         :param text: Input text to turn into speech.
@@ -339,8 +333,7 @@ class StyleTTS2:
                                        beta=beta,
                                        diffusion_steps=diffusion_steps,
                                        embedding_scale=embedding_scale,
-                                       ref_s=ref_s,
-                                       phonemize=phonemize)
+                                       ref_s=ref_s)
 
         if ref_s is None:
             # default to clone https://styletts2.github.io/wavs/LJSpeech/OOD/GT/00001.wav voice from LibriVox (public domain)
@@ -349,21 +342,17 @@ class StyleTTS2:
                 target_voice_path = cached_path(DEFAULT_TARGET_VOICE_URL)
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
-        # TODO: Clarifying text pre-processing
-        if phonemize:
-            text = text.strip()
-            text = text.replace('"', '')
-            phonemized_text = self.phoneme_converter.phonemize(text)
-            ps = word_tokenize(phonemized_text)
-            phoneme_string = ' '.join(ps)
-        else:
-            phoneme_string = text
+        text = text.strip()
+        text = text.replace('"', '')
+        ps = global_phonemizer.phonemize([text])
+        ps = word_tokenize(ps[0])
+        ps = ' '.join(ps)
 
-        textcleaner = TextCleaner()  # TODO: look into removing
-        tokens = textcleaner(phoneme_string)
+        textcleaner = TextCleaner()
+        tokens = textcleaner(ps)
         tokens.insert(0, 0)
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
-                      
+
         with torch.no_grad():
             input_lengths = torch.LongTensor([tokens.shape[-1]]).to(self.device)
             text_mask = length_to_mask(input_lengths).to(self.device)
@@ -436,7 +425,7 @@ class StyleTTS2:
                        diffusion_steps=5,
                        embedding_scale=1,
                        ref_s=None,
-                       phonemize=True):
+                       use_gruut=False):
         """
         Inference for longform text. Used automatically in inference() when needed.
         :param text: Input text to turn into speech.
@@ -458,14 +447,17 @@ class StyleTTS2:
                 print("Cloning default target voice...")
                 target_voice_path = cached_path(DEFAULT_TARGET_VOICE_URL)
             ref_s = self.compute_style(target_voice_path)  # target style vector
-
+            
         # Preprocess the text (e.g., clean up quotes and spaces)
         text = preprocess_to_ignore_quotes(text)
-
+    
         text_segments = segment_text(text)
         segments = []
         prev_s = None
         for text_segment in text_segments:
+            # Address cut-off sentence issue due to langchain text splitter
+            if text_segment[-1] != '.':
+                text_segment += ', '
             segment_output, prev_s = self.long_inference_segment(text_segment,
                                                                  prev_s,
                                                                  ref_s,
@@ -473,8 +465,7 @@ class StyleTTS2:
                                                                  beta=beta,
                                                                  t=t,
                                                                  diffusion_steps=diffusion_steps,
-                                                                 embedding_scale=embedding_scale,
-                                                                 phonemize=phonemize)
+                                                                 embedding_scale=embedding_scale)
             segments.append(segment_output)
         output = np.concatenate(segments)
         if output_wav_file:
@@ -490,7 +481,7 @@ class StyleTTS2:
                                t=0.7,
                                diffusion_steps=5,
                                embedding_scale=1,
-                               phonemize=True):
+                               use_gruut=False):
         """
         Performs inference for segment of longform text; see long_inference()
         :param text: Input text
@@ -503,22 +494,20 @@ class StyleTTS2:
         :param embedding_scale: Higher scale means style is more conditional to the input text and hence more emotional.
         :return: audio data as a Numpy array
         """
-        if phonemize:
-            text = text.strip()
-            text = text.replace('"', '')
-            phonemized_text = self.phoneme_converter.phonemize(text)
-            ps = word_tokenize(phonemized_text)
-            phoneme_string = ' '.join(ps)
-            phoneme_string = phoneme_string.replace('``', '"')
-            phoneme_string = phoneme_string.replace("''", '"')
-        else:
-            phoneme_string = text
+        text = text.strip()
+        text = text.replace('"', '')
+        phonemized_text = global_phonemizer.phonemize([text])
+        phonemized_text = ' '.join(phonemized_text)  # Join the list into a single string                           
+        ps = phonemized_text.split()
+        phoneme_string = ' '.join(ps)
+        phoneme_string = phoneme_string.replace('``', '"')
+        phoneme_string = phoneme_string.replace("''", '"')
 
         textcleaner = TextCleaner()
         tokens = textcleaner(phoneme_string)
         tokens.insert(0, 0)
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
-                                   
+
         with torch.no_grad():
             input_lengths = torch.LongTensor([tokens.shape[-1]]).to(self.device)
             text_mask = length_to_mask(input_lengths).to(self.device)
@@ -582,4 +571,4 @@ class StyleTTS2:
                                 F0_pred, N_pred, ref.squeeze().unsqueeze(0))
 
         return out.squeeze().cpu().numpy()[..., :-100], s_pred
-                
+    
