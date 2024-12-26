@@ -139,7 +139,7 @@ class StyleTTS2:
 
     def phonemize(self, text):
         """
-        Convert text to phonemes based on the phoneme converter.
+        Convert text to phonemes using gruut.
 
         Args:
             text (str): The input text to be converted.
@@ -148,14 +148,20 @@ class StyleTTS2:
             str: The phoneme representation of the input text.
         """
         if self.phoneme_converter == 'gruut_g2p':
-            # Use Gruut for phoneme conversion
-            phonemes = []
-            for _, phoneme_list in gruut.g2p.text_to_phonemes(text, lang="en-us"):
-                phonemes.append(" ".join(phoneme_list))
-            return " ".join(phonemes)
+            # Initialize the gruut TextProcessor for English
+            processor = gruut.TextProcessor(lang='en-us')
+
+            # Process the text to get words and their phonemes
+            words = processor.process(text)
+
+            # Extract phonemes from the processed words
+            phonemes = [word['phonemes'] for word in words]
+
+            # Join the phonemes into a single string
+            phonemized_text = ' '.join(phonemes)
+            return phonemized_text
         else:
             raise ValueError(f"Unsupported phoneme converter: {self.phoneme_converter}")
-
     
     def load_model(self, model_path=None, config_path=None):
         """
