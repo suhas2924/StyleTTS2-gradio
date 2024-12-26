@@ -148,17 +148,17 @@ class StyleTTS2:
             str: The phoneme representation of the input text.
         """
         if self.phoneme_converter == 'gruut_g2p':
-            # Initialize the gruut processor for English
+            # Initialize the gruut processor
             processor = gruut.TextProcessor()
 
             # Process the text to get sentences with words and their phonemes
             sentences = processor.process(text)
 
-            # Extract phonemes from the processed sentences
             phonemes = []
             for sentence in sentences:
                 for word in sentence:
-                    if word.phonemes:
+                    # Ensure 'word' is a Word object and has phonemes
+                    if hasattr(word, 'phonemes') and word.phonemes:
                         phonemes.extend(word.phonemes)
                     else:
                         phonemes.append(word.text)  # Use the word text if no phonemes are found
@@ -167,7 +167,7 @@ class StyleTTS2:
             return ' '.join(phonemes)
         else:
             raise ValueError(f"Unsupported phoneme converter: {self.phoneme_converter}")
-    
+            
     def load_model(self, model_path=None, config_path=None):
         """
         Loads model to prepare for inference. Loads checkpoints from provided paths or from local cache (or downloads
