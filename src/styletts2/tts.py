@@ -29,6 +29,7 @@ from . import models
 from . import utils
 from .text_utils import TextCleaner
 from .Utils.PLBERT.util import load_plbert
+from gruut import sentences, g2p
 from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSchedule
 
 
@@ -120,10 +121,10 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 # phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
 class StyleTTS2:
-    def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
+    def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='gruut_g2p'):
         self.model = None
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.phoneme_converter = global_phonemizer
+        self.phoneme_converter = phoneme_converter
         self.config = None
         self.model_params = None
         self.model = self.load_model(model_path=model_checkpoint_path, config_path=config_path)
@@ -135,7 +136,26 @@ class StyleTTS2:
             clamp=False
         )
 
+    def phonemize(self, text):
+        """
+        Convert text to phonemes based on the phoneme converter.
 
+        Args:
+            text (str): The input text to be converted.
+
+        Returns:
+            str: The phoneme representation of the input text.
+        """
+        if self.phoneme_converter == 'gruut_g2p':
+            # Use Gruut for phoneme conversion
+            phonemes = []
+            for sentence in sentences.SentenceTokenizer.tokenize(text):
+                for _, phoneme_list in g2p.text_to_phonemes(sentence, lang="en-us"):
+                    phonemes.append(" ".join(phoneme_list))
+            return " ".join(phonemes)
+        else:
+            raise ValueError(f"Unsupported phoneme converter: {self.phoneme_converter}")
+            
     def load_model(self, model_path=None, config_path=None):
         """
         Loads model to prepare for inference. Loads checkpoints from provided paths or from local cache (or downloads
@@ -277,7 +297,7 @@ class StyleTTS2:
 
         text = text.strip()
         text = text.replace('"', '')
-        ps = global_phonemizer.phonemize([text])
+        ps = self.phonemize([text])
         ps = word_tokenize(ps[0])
         ps = ' '.join(ps)
 
@@ -423,7 +443,7 @@ class StyleTTS2:
         """
         text = text.strip()
         text = text.replace('"', '')
-        phonemized_text = global_phonemizer.phonemize([text])
+        phonemized_text = self.phonemize([text])
         phonemized_text = ' '.join(phonemized_text)  # Join the list into a single string                           
         ps = phonemized_text.split()
         phoneme_string = ' '.join(ps)
