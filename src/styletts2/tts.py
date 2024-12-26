@@ -473,7 +473,7 @@ class StyleTTS2:
                                                                  beta=beta,
                                                                  t=t,
                                                                  diffusion_steps=diffusion_steps,
-                                                                 embedding_scale=embedding_scale
+                                                                 embedding_scale=embedding_scale,
                                                                  phonemize=phonemize)
             segments.append(segment_output)
         output = np.concatenate(segments)
