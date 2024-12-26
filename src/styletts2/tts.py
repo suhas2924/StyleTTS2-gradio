@@ -149,7 +149,7 @@ class StyleTTS2:
         """
         if self.phoneme_converter == 'gruut_g2p':
             # Initialize the gruut processor for English
-            processor = gruut.TextProcessor(lang='en-us')
+            processor = gruut.TextProcessor()
 
             # Process the text to get sentences with words and their phonemes
             sentences = processor.process(text)
