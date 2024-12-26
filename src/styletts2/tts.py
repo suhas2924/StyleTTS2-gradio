@@ -29,7 +29,7 @@ from . import models
 from . import utils
 from .text_utils import TextCleaner
 from .Utils.PLBERT.util import load_plbert
-import gruut
+from .phoneme import PhonemeConverterFactory
 from gruut import sentences, g2p
 from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSchedule
 
@@ -71,48 +71,120 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
     
-def segment_text(text, max_chars=512):
-    """
-    Splits the text into chunks by sentence-ending punctuation first (., ?, !),
-    and then further splits by commas if necessary.
-    """
-    def split_by_punctuation(text, max_chars):
-        batches = []
-        current_part = ""
+SPLIT_WORDS = [
+    "but", "however", "nevertheless", "yet", "still",
+    "therefore", "thus", "hence", "consequently",
+    "moreover", "furthermore", "additionally",
+    "meanwhile", "alternatively", "otherwise",
+    "namely", "specifically", "for example", "such as",
+    "in fact", "indeed", "notably",
+    "in contrast", "on the other hand", "conversely",
+    "in conclusion", "to summarize", "finally"
+]
+def preprocess_to_ignore_quotes(text):
+# Preprocess the text
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    text = re.sub(r'\.\.\.|\. \. \.', '…', text)
+    text = re.sub(r'[“”"]', '', text)  # Remove both fancy quotes and normal quotes
+    text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
+    print ("Cleaned Text", text)
+    return text
+    
+def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
+    if len(text.encode('utf-8')) <= max_chars:
+        return [text]
+    if text[-1] not in ['。', '.', '!', '！', '?', '？']:
+        text += '.'
 
-        # Split the text by sentence-ending punctuation
-        for sentence in re.split(r'(?<=[.])\s*', text):  # Retain punctuation in sentences
-            sentence = sentence.strip()
-            if len(sentence.encode('utf-8')) > max_chars:
-                # Further split by commas if the sentence is too large
-                comma_parts = sentence.split(',')
-                for comma_part in comma_parts:
-                    if len(current_part.encode('utf-8')) + len(comma_part.encode('utf-8')) <= max_chars:
-                        current_part += comma_part + ','
-                    else:
-                        if current_part:
-                            batches.append(current_part.rstrip(','))
-                        current_part = comma_part + ','
-                if current_part:
-                    batches.append(current_part.rstrip(','))
-                    current_part = ""
+    sentences = re.split('([。.!?！？])', text)
+    sentences = [''.join(i) for i in zip(sentences[0::2], sentences[1::2])]
+    
+    batches = []
+    current_batch = ""
+
+    def split_by_words(text):
+        words = text.split()
+        current_word_part = ""
+        word_batches = []
+        for word in words:
+            if len(current_word_part.encode('utf-8')) + len(word.encode('utf-8')) + 1 <= max_chars:
+                current_word_part += word + ' '
             else:
-                batches.append(sentence)
-        
-        # Handle any remaining content
-        if current_part:
-            batches.append(current_part.rstrip(','))
+                if current_word_part:
+                    # Try to find a suitable split word
+                    for split_word in split_words:
+                        split_index = current_word_part.rfind(' ' + split_word + ' ')
+                        if split_index != -1:
+                            word_batches.append(current_word_part[:split_index].strip())
+                            current_word_part = current_word_part[split_index:].strip() + ' '
+                            break
+                    else:
+                        # If no suitable split word found, just append the current part
+                        word_batches.append(current_word_part.strip())
+                        current_word_part = ""
+                current_word_part += word + ' '
+        if current_word_part:
+            word_batches.append(current_word_part.strip())
+        return word_batches
 
-        return batches
+    for sentence in sentences:
+        if len(current_batch.encode('utf-8')) + len(sentence.encode('utf-8')) <= max_chars:
+            current_batch += sentence
+        else:
+            # If adding this sentence would exceed the limit
+            if current_batch:
+                batches.append(current_batch)
+                current_batch = ""
+            
+            # If the sentence itself is longer than max_chars, split it
+            if len(sentence.encode('utf-8')) > max_chars:
+                # First, try to split by colon
+                colon_parts = sentence.split(':')
+                if len(colon_parts) > 1:
+                    for part in colon_parts:
+                        if len(part.encode('utf-8')) <= max_chars:
+                            batches.append(part)
+                        else:
+                            # If colon part is still too long, split by comma
+                            comma_parts = re.split('[,，]', part)
+                            if len(comma_parts) > 1:
+                                current_comma_part = ""
+                                for comma_part in comma_parts:
+                                    if len(current_comma_part.encode('utf-8')) + len(comma_part.encode('utf-8')) <= max_chars:
+                                        current_comma_part += comma_part + ','
+                                    else:
+                                        if current_comma_part:
+                                            batches.append(current_comma_part.rstrip(','))
+                                        current_comma_part = comma_part + ','
+                                if current_comma_part:
+                                    batches.append(current_comma_part.rstrip(','))
+                            else:
+                                # If no comma, split by words
+                                batches.extend(split_by_words(part))
+                else:
+                    # If no colon, split by comma
+                    comma_parts = re.split('[,，]', sentence)
+                    if len(comma_parts) > 1:
+                        current_comma_part = ""
+                        for comma_part in comma_parts:
+                            if len(current_comma_part.encode('utf-8')) + len(comma_part.encode('utf-8')) <= max_chars:
+                                current_comma_part += comma_part + ','
+                            else:
+                                if current_comma_part:
+                                    batches.append(current_comma_part.rstrip(','))
+                                current_comma_part = comma_part + ','
+                        if current_comma_part:
+                            batches.append(current_comma_part.rstrip(','))
+                    else:
+                        # If no comma, split by words
+                        batches.extend(split_by_words(sentence))
+            else:
+                current_batch = sentence
 
-    # Preprocess the text (e.g., clean up quotes and spaces)
-    cleaned_text = preprocess_to_ignore_quotes(text)
-    
-    # Use the new split function
-    segments = split_by_punctuation(cleaned_text, max_chars)
-    
-    # Remove any trailing whitespace from each segment
-    return [segment.strip() for segment in segments if segment.strip()]
+    if current_batch:
+        batches.append(current_batch)
+
+    return batches
     
 # global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True,  with_stress=True)
 phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
@@ -122,10 +194,10 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 # phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
 class StyleTTS2:
-    def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='gruut_g2p'):
+    def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='gruut'):
         self.model = None
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.phoneme_converter = phoneme_converter
+        self.phoneme_converter = PhonemeConverterFactory.load_phoneme_converter(phoneme_converter)
         self.config = None
         self.model_params = None
         self.model = self.load_model(model_path=model_checkpoint_path, config_path=config_path)
@@ -137,30 +209,6 @@ class StyleTTS2:
             clamp=False
         )
 
-    def phonemize(self, text):
-        """
-        Convert text to phonemes using gruut's G2P functionality.
-
-        Args:
-            text (str): The input text to be converted.
-
-        Returns:
-            str: The phoneme representation of the input text.
-        """
-        if self.phoneme_converter == 'gruut_g2p':
-            # Process the text to get sentences with words and their phonemes
-            phonemes = []
-            for sentence in sentences(text, lang="en-us"):
-                for word in sentence:
-                    if word.phonemes:
-                        phonemes.append(word.text)  # Add word text
-                        phonemes.extend(word.phonemes)  # Add phonemes for the word
-
-            # Join the phonemes into a single string
-            return ' '.join(phonemes)
-        else:
-            raise ValueError(f"Unsupported phoneme converter: {self.phoneme_converter}")
-    
     def load_model(self, model_path=None, config_path=None):
         """
         Loads model to prepare for inference. Loads checkpoints from provided paths or from local cache (or downloads
@@ -300,17 +348,21 @@ class StyleTTS2:
                 target_voice_path = cached_path(DEFAULT_TARGET_VOICE_URL)
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
-        text = text.strip()
-        text = text.replace('"', '')
-        ps = self.phonemize(text)
-        ps = word_tokenize(ps[0])
-        ps = ' '.join(ps)
+        # TODO: Clarifying text pre-processing
+        if phonemize:
+            text = text.strip()
+            text = text.replace('"', '')
+            phonemized_text = self.phoneme_converter.phonemize(text)
+            ps = word_tokenize(phonemized_text)
+            phoneme_string = ' '.join(ps)
+        else:
+            phoneme_string = text
 
-        textcleaner = TextCleaner()
-        tokens = textcleaner(ps)
+        textcleaner = TextCleaner()  # TODO: look into removing
+        tokens = textcleaner(phoneme_string)
         tokens.insert(0, 0)
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
-
+                      
         with torch.no_grad():
             input_lengths = torch.LongTensor([tokens.shape[-1]]).to(self.device)
             text_mask = length_to_mask(input_lengths).to(self.device)
@@ -406,6 +458,9 @@ class StyleTTS2:
                 target_voice_path = cached_path(DEFAULT_TARGET_VOICE_URL)
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
+        # Preprocess the text (e.g., clean up quotes and spaces)
+        text = preprocess_to_ignore_quotes(text)
+
         text_segments = segment_text(text)
         segments = []
         prev_s = None
@@ -446,20 +501,22 @@ class StyleTTS2:
         :param embedding_scale: Higher scale means style is more conditional to the input text and hence more emotional.
         :return: audio data as a Numpy array
         """
-        text = text.strip()
-        text = text.replace('"', '')
-        phonemized_text = self.phonemize(text)
-        phonemized_text = ' '.join(phonemized_text)  # Join the list into a single string                           
-        ps = phonemized_text.split()
-        phoneme_string = ' '.join(ps)
-        phoneme_string = phoneme_string.replace('``', '"')
-        phoneme_string = phoneme_string.replace("''", '"')
+        if phonemize:
+            text = text.strip()
+            text = text.replace('"', '')
+            phonemized_text = self.phoneme_converter.phonemize(text)
+            ps = word_tokenize(phonemized_text)
+            phoneme_string = ' '.join(ps)
+            phoneme_string = phoneme_string.replace('``', '"')
+            phoneme_string = phoneme_string.replace("''", '"')
+        else:
+            phoneme_string = text
 
         textcleaner = TextCleaner()
         tokens = textcleaner(phoneme_string)
         tokens.insert(0, 0)
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
-
+                                   
         with torch.no_grad():
             input_lengths = torch.LongTensor([tokens.shape[-1]]).to(self.device)
             text_mask = length_to_mask(input_lengths).to(self.device)
