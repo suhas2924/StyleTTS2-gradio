@@ -314,7 +314,7 @@ class StyleTTS2:
                   diffusion_steps=5,
                   embedding_scale=1,
                   ref_s=None,
-                  use_gruut=False):
+                  phonemize=True):
         """
         Text-to-speech function
         :param text: Input text to turn into speech.
@@ -339,7 +339,8 @@ class StyleTTS2:
                                        beta=beta,
                                        diffusion_steps=diffusion_steps,
                                        embedding_scale=embedding_scale,
-                                       ref_s=ref_s)
+                                       ref_s=ref_s,
+                                       phonemize=phonemize)
 
         if ref_s is None:
             # default to clone https://styletts2.github.io/wavs/LJSpeech/OOD/GT/00001.wav voice from LibriVox (public domain)
@@ -435,7 +436,7 @@ class StyleTTS2:
                        diffusion_steps=5,
                        embedding_scale=1,
                        ref_s=None,
-                       use_gruut=False):
+                       phonemize=True):
         """
         Inference for longform text. Used automatically in inference() when needed.
         :param text: Input text to turn into speech.
@@ -472,7 +473,8 @@ class StyleTTS2:
                                                                  beta=beta,
                                                                  t=t,
                                                                  diffusion_steps=diffusion_steps,
-                                                                 embedding_scale=embedding_scale)
+                                                                 embedding_scale=embedding_scale
+                                                                 phonemize=phonemize)
             segments.append(segment_output)
         output = np.concatenate(segments)
         if output_wav_file:
@@ -488,7 +490,7 @@ class StyleTTS2:
                                t=0.7,
                                diffusion_steps=5,
                                embedding_scale=1,
-                               use_gruut=False):
+                               phonemize=True):
         """
         Performs inference for segment of longform text; see long_inference()
         :param text: Input text
