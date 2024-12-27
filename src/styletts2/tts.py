@@ -13,10 +13,10 @@ torch.manual_seed(0)
 torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 
-
-from .phoneme import phonemize
+import sys
+from phonemizer.punctuation import Punctuation
 from phonemizer.backend import EspeakBackend
-from phonemizer.backend.espeak.wrapper import EspeakWrapper
+from phonemizer import phonemize
 
 
 import random
