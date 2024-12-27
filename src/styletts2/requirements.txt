@@ -20,6 +20,5 @@ git+https://github.com/resemble-ai/monotonic_align.git
 gruut>=2.3.4
 gruut-ipa>=0.13.0
 gruut-lang-en>=2.0.0
-phonemizer 
-deep-phonemizer
+git+https://github.com/bootphon/phonemizer.git
 gradio==4.44.1
