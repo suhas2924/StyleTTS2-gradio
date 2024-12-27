@@ -13,12 +13,11 @@ torch.manual_seed(0)
 torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 
-import sys
-from phonemizer.punctuation import Punctuation
+
+from .phoneme import phonemize
 from phonemizer.backend import EspeakBackend
 from phonemizer.backend.espeak.wrapper import EspeakWrapper
-from phonemizer.separator import Separator, default_separator
-from phonemizer import phonemize
+
 
 import random
 random.seed(0)
@@ -181,7 +180,7 @@ def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
     return batches
 
 import phonemizer
-global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', punctuation_marks=Punctuation.default_marks(), preserve_punctuation=True,  with_stress=True)
+global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', punctuation_marks=Punctuation.default_marks(), preserve_punctuation=True,  with_stress=True, use_sampa=True)
 # phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
 class StyleTTS2:
