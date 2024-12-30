@@ -79,7 +79,6 @@ def preprocess_to_ignore_quotes(text):
 # Preprocess the text
     text = text.replace('\r\n', '\n').replace('\r', '\n')
     text = re.sub(r'\.\.\.|\. \. \.', '…', text)
-    text = re.sub(r'[“”"]', '', text)  # Remove both fancy quotes and normal quotes
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     print ("Cleaned Text", text)
     return text
@@ -341,7 +340,6 @@ class StyleTTS2:
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
         text = text.strip()
-        text = text.replace('"', '')
         ps = global_phonemizer.phonemize([text])
         ps = word_tokenize(ps[0])
         ps = ' '.join(ps)
@@ -493,13 +491,10 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
-        text = text.replace('"', '')
         phonemized_text = global_phonemizer.phonemize([text])
         phonemized_text = ' '.join(phonemized_text)  # Join the list into a single string                           
         ps = phonemized_text.split()
         phoneme_string = ' '.join(ps)
-        phoneme_string = phoneme_string.replace('``', '"')
-        phoneme_string = phoneme_string.replace("''", '"')
 
         textcleaner = TextCleaner()
         tokens = textcleaner(phoneme_string)
