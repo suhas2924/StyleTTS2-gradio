@@ -14,8 +14,10 @@ torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 
 import sys
+from phonemizer.backend import FestivalBackend
+from phonemizer.backend.base import BaseBackend
 from phonemizer.punctuation import Punctuation
-from phonemizer.backend import EspeakBackend
+from phonemizer.separator import default_separator, Separator
 from phonemizer import phonemize
 
 
@@ -180,7 +182,7 @@ def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
     return batches
 
 import phonemizer
-global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', punctuation_marks=Punctuation.default_marks(), preserve_punctuation=True,  with_stress=True)
+global_phonemizer = phonemizer.backend.FestivalBackend(language='en-us', punctuation_marks=Punctuation.default_marks(), preserve_punctuation=True)
 # phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
 class StyleTTS2:
