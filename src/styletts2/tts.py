@@ -500,6 +500,7 @@ class StyleTTS2:
         phonemized_text = ' '.join(phonemized_text)  # Join the list into a single string                           
         ps = phonemized_text.split()
         phoneme_string = ' '.join(ps)
+        print (f"Phoneme: {phoneme_string}")
 
         textcleaner = TextCleaner()
         tokens = textcleaner(phoneme_string)
