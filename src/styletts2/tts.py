@@ -94,7 +94,7 @@ def preprocess_to_ignore_quotes(text):
     print ("Cleaned Text", text)
     return text
 
-def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
+def segment_text(text, max_chars=300, split_words=SPLIT_WORDS):
     if len(text.encode('utf-8')) <= max_chars:
         return [text]
     if not text or text[-1] not in ['。', '...']:
@@ -188,6 +188,17 @@ def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
 
     if current_batch:
         batches.append(current_batch)
+
+    # Adjust batches to ensure approximately equal size
+    for i in range(len(batches) - 1):
+        while (
+            len(batches[i].encode('utf-8')) < max_chars * 0.8  # Current chunk is too short
+            and len(batches[i + 1].encode('utf-8')) + len(batches[i].encode('utf-8')) <= max_chars  # Can merge
+        ):
+            batches[i] += " " + batches[i + 1]
+            del batches[i + 1]
+            if i >= len(batches) - 1:  # Prevent index error if the list shortens
+                break
 
     return batches
 
