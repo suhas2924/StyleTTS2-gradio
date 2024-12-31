@@ -91,7 +91,6 @@ def preprocess_to_ignore_quotes(text):
      # Normalize uppercase words to title case unless they are acronyms
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
-    print ("Cleaned Text", text)
     return text
 
 def segment_text(text, max_chars=300, split_words=SPLIT_WORDS):
