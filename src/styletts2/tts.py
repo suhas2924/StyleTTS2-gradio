@@ -93,7 +93,7 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_chars=300, split_words=SPLIT_WORDS):
+def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
     if len(text.encode('utf-8')) <= max_chars:
         return [text]
     if not text or text[-1] not in ['。', '...']:
