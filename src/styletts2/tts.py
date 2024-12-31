@@ -93,15 +93,30 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
+def segment_text(text, max_chars=200, min_chars=160, split_words=SPLIT_WORDS):
+    # If the text fits in one batch, return it directly
     if len(text.encode('utf-8')) <= max_chars:
         return [text]
+
+    # Split sentences by ellipses first, keeping the ellipses with the previous sentence
     if not text or text[-1] not in ['。', '...']:
         text += '...'
-
-    # Split sentences by ellipses, keeping the ellipses and quotes with the previous text
+    
+    # Split at ellipses and create batches
     sentences = re.split(r'(\.\.\."?)', text)  # Split at ellipses
     sentences = [''.join(i) for i in zip(sentences[0::2], sentences[1::2])]
+
+    # Number of chunks we need
+    total_length = len(text.encode('utf-8'))
+    num_chunks = total_length // max_chars
+    if total_length % max_chars != 0:
+        num_chunks += 1
+
+    # Estimate ideal chunk size (even distribution)
+    ideal_chunk_size = total_length // num_chunks
+
+    # Adjust chunk size to be within [min_chars, max_chars]
+    chunk_size = max(min_chars, min(ideal_chunk_size, max_chars))
 
     batches = []
     current_batch = ""
@@ -111,50 +126,38 @@ def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
         current_word_part = ""
         word_batches = []
         for word in words:
-            if len(current_word_part.encode('utf-8')) + len(word.encode('utf-8')) + 1 <= max_chars:
+            if len(current_word_part.encode('utf-8')) + len(word.encode('utf-8')) + 1 <= chunk_size:
                 current_word_part += word + ' '
             else:
                 if current_word_part:
-                    # Try to find a suitable split word
-                    for split_word in split_words:
-                        split_index = current_word_part.rfind(' ' + split_word + ' ')
-                        if split_index != -1:
-                            word_batches.append(current_word_part[:split_index].strip())
-                            current_word_part = current_word_part[split_index:].strip() + ' '
-                            break
-                    else:
-                        # If no suitable split word found, just append the current part
-                        word_batches.append(current_word_part.strip())
-                        current_word_part = ""
-                current_word_part += word + ' '
+                    word_batches.append(current_word_part.strip())
+                current_word_part = word + ' '
         if current_word_part:
             word_batches.append(current_word_part.strip())
         return word_batches
 
+    # Process sentences logically
     for sentence in sentences:
-        if len(current_batch.encode('utf-8')) + len(sentence.encode('utf-8')) <= max_chars:
+        if len(current_batch.encode('utf-8')) + len(sentence.encode('utf-8')) <= chunk_size:
             current_batch += sentence
         else:
-            # If adding this sentence would exceed the limit
             if current_batch:
                 batches.append(current_batch)
                 current_batch = ""
-            
-            # If the sentence itself is longer than max_chars, split it
-            if len(sentence.encode('utf-8')) > max_chars:
-                # First, try to split by colon
+
+            # If the sentence is too long, split it further by logical structures
+            if len(sentence.encode('utf-8')) > chunk_size:
                 colon_parts = sentence.split(':')
                 if len(colon_parts) > 1:
                     for part in colon_parts:
-                        if len(part.encode('utf-8')) <= max_chars:
+                        if len(part.encode('utf-8')) <= chunk_size:
                             batches.append(part)
                         else:
-                            # If colon part is still too long, split by comma
                             comma_parts = re.split(r'([,，]"?)', part)
                             if len(comma_parts) > 1:
                                 current_comma_part = ""
                                 for comma_part in comma_parts:
-                                    if len(current_comma_part.encode('utf-8')) + len(comma_part.encode('utf-8')) <= max_chars:
+                                    if len(current_comma_part.encode('utf-8')) + len(comma_part.encode('utf-8')) <= chunk_size:
                                         current_comma_part += comma_part
                                     else:
                                         if current_comma_part:
@@ -163,15 +166,13 @@ def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
                                 if current_comma_part:
                                     batches.append(current_comma_part.strip())
                             else:
-                                # If no comma, split by words
                                 batches.extend(split_by_words(part))
                 else:
-                    # If no colon, split by comma
                     comma_parts = re.split(r'([,，]"?)', sentence)
                     if len(comma_parts) > 1:
                         current_comma_part = ""
                         for comma_part in comma_parts:
-                            if len(current_comma_part.encode('utf-8')) + len(comma_part.encode('utf-8')) <= max_chars:
+                            if len(current_comma_part.encode('utf-8')) + len(comma_part.encode('utf-8')) <= chunk_size:
                                 current_comma_part += comma_part
                             else:
                                 if current_comma_part:
@@ -180,7 +181,6 @@ def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
                         if current_comma_part:
                             batches.append(current_comma_part.strip())
                     else:
-                        # If no comma, split by words
                         batches.extend(split_by_words(sentence))
             else:
                 current_batch = sentence
@@ -188,18 +188,21 @@ def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
     if current_batch:
         batches.append(current_batch)
 
-    # Adjust batches to ensure approximately equal size
-    for i in range(len(batches) - 1):
-        while (
-            len(batches[i].encode('utf-8')) < max_chars * 0.8  # Current chunk is too short
-            and len(batches[i + 1].encode('utf-8')) + len(batches[i].encode('utf-8')) <= max_chars  # Can merge
-        ):
-            batches[i] += " " + batches[i + 1]
-            del batches[i + 1]
-            if i >= len(batches) - 1:  # Prevent index error if the list shortens
-                break
+    # Adjust the last few batches to make sure they are within the size limits
+    final_batches = []
+    temp_batch = ""
+    for batch in batches:
+        if len(temp_batch.encode('utf-8')) + len(batch.encode('utf-8')) <= chunk_size:
+            temp_batch += " " + batch
+        else:
+            if temp_batch:
+                final_batches.append(temp_batch.strip())
+            temp_batch = batch
 
-    return batches
+    if temp_batch:
+        final_batches.append(temp_batch.strip())
+
+    return final_batches
 
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
