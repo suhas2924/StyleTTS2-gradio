@@ -65,20 +65,31 @@ def preprocess(wave):
     mel_tensor = (torch.log(1e-5 + mel_tensor.unsqueeze(0)) - mean) / std
     return mel_tensor
 
+import phonemizer
+global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', punctuation_marks=Punctuation.default_marks(), preserve_punctuation=True, with_stress=True)
+# phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
+
 SPLIT_WORDS = [
-    "but", "however", "nevertheless", "yet", "still",
-    "therefore", "thus", "hence", "consequently",
-    "moreover", "furthermore", "additionally",
-    "meanwhile", "alternatively", "otherwise",
-    "namely", "specifically", "for example", "such as",
-    "in fact", "indeed", "notably",
+    "but", "then", "so", "however", "nevertheless", "yet", "still", "accordingly", "consequently",
+    "therefore", "thus", "hence", "consequently", "after", "subsequently",
+    "moreover", "furthermore", "additionally", "nonetheless", "also", "besides",
+    "meanwhile", "alternatively", "otherwise", "nevertheless", "meanwhile",
+    "namely", "specifically", "for example", "such as", "and",
+    "in fact", "indeed", "notably", "instead", "likewise",
     "in contrast", "on the other hand", "conversely",
     "in conclusion", "to summarize", "finally"
 ]
+
 def preprocess_to_ignore_quotes(text):
-# Preprocess the text
     text = text.replace('\r\n', '\n').replace('\r', '\n')
-    text = re.sub(r'\.\.\.|\. \. \.', '…', text)
+    text = re.sub(r'[“”]', '"', text)  # Remove both fancy quotes and normal quotes
+    # Temporarily replace existing ellipses (...) with a placeholder
+    text = re.sub(r'\.\.\.|\. \. \.|…', '###ELLIPSIS###', text)
+    text = re.sub(r'[.]', '...', text)
+    # Restore the placeholder back to actual ellipses (...)
+    text = re.sub(r'###ELLIPSIS###', '...', text)
+     # Normalize uppercase words to title case unless they are acronyms
+    text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     print ("Cleaned Text", text)
     return text
@@ -86,12 +97,13 @@ def preprocess_to_ignore_quotes(text):
 def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
     if len(text.encode('utf-8')) <= max_chars:
         return [text]
-    if text[-1] not in ['。', '.', '!', '！', '?', '？']:
-        text += '.'
+    if not text or text[-1] not in ['。', '...']:
+        text += '...'
 
-    sentences = re.split('([。.!?！？])', text)
+    # Split sentences by ellipses, keeping the ellipses and quotes with the previous text
+    sentences = re.split(r'(\.\.\."?)', text)  # Split at ellipses
     sentences = [''.join(i) for i in zip(sentences[0::2], sentences[1::2])]
-    
+
     batches = []
     current_batch = ""
 
@@ -139,35 +151,35 @@ def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
                             batches.append(part)
                         else:
                             # If colon part is still too long, split by comma
-                            comma_parts = re.split('[,，]', part)
+                            comma_parts = re.split(r'([,，]"?)', part)
                             if len(comma_parts) > 1:
                                 current_comma_part = ""
                                 for comma_part in comma_parts:
                                     if len(current_comma_part.encode('utf-8')) + len(comma_part.encode('utf-8')) <= max_chars:
-                                        current_comma_part += comma_part + ','
+                                        current_comma_part += comma_part
                                     else:
                                         if current_comma_part:
-                                            batches.append(current_comma_part.rstrip(','))
-                                        current_comma_part = comma_part + ','
+                                            batches.append(current_comma_part.strip())
+                                        current_comma_part = comma_part
                                 if current_comma_part:
-                                    batches.append(current_comma_part.rstrip(','))
+                                    batches.append(current_comma_part.strip())
                             else:
                                 # If no comma, split by words
                                 batches.extend(split_by_words(part))
                 else:
                     # If no colon, split by comma
-                    comma_parts = re.split('[,，]', sentence)
+                    comma_parts = re.split(r'([,，]"?)', sentence)
                     if len(comma_parts) > 1:
                         current_comma_part = ""
                         for comma_part in comma_parts:
                             if len(current_comma_part.encode('utf-8')) + len(comma_part.encode('utf-8')) <= max_chars:
-                                current_comma_part += comma_part + ','
+                                current_comma_part += comma_part
                             else:
                                 if current_comma_part:
-                                    batches.append(current_comma_part.rstrip(','))
-                                current_comma_part = comma_part + ','
+                                    batches.append(current_comma_part.strip())
+                                current_comma_part = comma_part
                         if current_comma_part:
-                            batches.append(current_comma_part.rstrip(','))
+                            batches.append(current_comma_part.strip())
                     else:
                         # If no comma, split by words
                         batches.extend(split_by_words(sentence))
@@ -179,14 +191,10 @@ def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
 
     return batches
 
-import phonemizer
-global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', punctuation_marks=Punctuation.default_marks(), preserve_punctuation=True, with_stress=True)
-# phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
-
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
         self.model = None
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cpu'
         self.phoneme_converter = global_phonemizer
         self.config = None
         self.model_params = None
@@ -451,9 +459,6 @@ class StyleTTS2:
         segments = []
         prev_s = None
         for text_segment in text_segments:
-            # Address cut-off sentence issue due to langchain text splitter
-            if text_segment[-1] != '.':
-                text_segment += ', '
             segment_output, prev_s = self.long_inference_segment(text_segment,
                                                                  prev_s,
                                                                  ref_s,
