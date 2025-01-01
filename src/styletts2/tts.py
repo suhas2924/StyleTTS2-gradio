@@ -80,11 +80,11 @@ def preprocess_to_ignore_quotes(text):
 def segment_text(text, max_chars=200):
     if len(text.encode('utf-8')) <= max_chars:
         return [text]
-    if not text or text[-1] not in ['。', '.', '...', ':', ',', '，', '?']:
+    if not text or text[-1] not in ['。', '.', '...', ',']:
         text += '...'
 
     # Split sentences by ellipses and punctuation, keeping them with the previous text
-    sentences = re.split(r'([。.:,，?]"?|"\.\.\."?)', text)  # Split at punctuation or ellipses
+    sentences = re.split(r'([。.,]"?|"\.\.\."?)', text)  # Split at punctuation or ellipses
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     batches = []
