@@ -85,7 +85,7 @@ def segment_text(text, max_chars=200):
 
     # Split sentences by ellipses and punctuation, keeping them with the previous text
     sentences = re.split(r'([。.:,，?]"?|"\.\.\."?)', text)  # Split at punctuation or ellipses
-    sentences = [''.join(i) for i in zip(sentences[0::2], sentences[1::2])]
+    sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     batches = []
     current_batch = ""
@@ -96,17 +96,14 @@ def segment_text(text, max_chars=200):
         else:
             # Append the current batch if it exceeds the limit
             if current_batch:
-                batches.append(current_batch)
+                batches.append(current_batch.strip())
             current_batch = sentence  # Start a new batch with the current sentence
 
     # Append the last batch if there's remaining text
     if current_batch:
-        batches.append(current_batch)
+        batches.append(current_batch.strip())
 
-    # **Clean whitespace for all batches**
-    cleaned_batches = [re.sub(r'\s+', ' ', batch).strip() for batch in batches]
-
-    return cleaned_batches
+    return batches
 
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
