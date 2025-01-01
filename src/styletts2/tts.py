@@ -93,7 +93,7 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_chars=120, split_words=SPLIT_WORDS):
+def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
     # If the text fits in one batch, return it directly
     if len(text.encode('utf-8')) <= max_chars:
         return [text]
@@ -143,7 +143,10 @@ def segment_text(text, max_chars=120, split_words=SPLIT_WORDS):
     if current_batch:
         batches.append(current_batch.strip())
 
-    return batches
+    # **Clean whitespace for all batches**
+    cleaned_batches = [re.sub(r'\s+', ' ', batch).strip() for batch in batches]
+
+    return cleaned_batches
 
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
