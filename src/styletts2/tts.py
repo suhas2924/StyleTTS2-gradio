@@ -69,37 +69,74 @@ import phonemizer
 global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', punctuation_marks=Punctuation.default_marks(), preserve_punctuation=True, with_stress=True)
 # phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
+SPLIT_WORDS = [
+    "but", "then", "so", "however", "nevertheless", "yet", "still", "accordingly", "consequently",
+    "therefore", "thus", "hence", "consequently", "after", "subsequently",
+    "moreover", "furthermore", "additionally", "nonetheless", "also", "besides",
+    "meanwhile", "alternatively", "otherwise", "nevertheless", "meanwhile",
+    "namely", "specifically", "for example", "such as", "and",
+    "in fact", "indeed", "notably", "instead", "likewise",
+    "in contrast", "on the other hand", "conversely",
+    "in conclusion", "to summarize", "finally"
+]
+
 def preprocess_to_ignore_quotes(text):
-    text = re.sub(r'[\n\s]+', ' ', text)
-    text = re.sub(r'[“”]', '"', text)  # Remove both fancy quotes and normal quotes
-    text = re.sub(r'\.\.\.|\. \. \.|…', '...', text)
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    text = re.sub(r'[“”]', '"', text)  
+    text = re.sub(r'\.\.\.|\. \. \.|…', '###ELLIPSIS###', text)
+    text = re.sub(r'[.]', '...', text)
+    text = re.sub(r'###ELLIPSIS###', '...', text)
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
-
-def segment_text(text, max_chars=200):
+    
+def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
+    # If the text fits in one batch, return it directly
     if len(text.encode('utf-8')) <= max_chars:
         return [text]
-    if not text or text[-1] not in ['。', '.', '...', ',']:
+
+    # Add ellipses if the last character isn't one of the specified punctuations
+    if not text or text[-1] not in ['。', '...', ',']:
         text += '...'
 
-    # Split sentences by ellipses and punctuation, keeping them with the previous text
-    sentences = re.split(r'([。.,]"?|"\.\.\."?)', text)  # Split at punctuation or ellipses
+    # Split at ellipses, commas, or commas followed by end quotes
+    sentences = re.split(r'(\.\.\."?|[,]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     batches = []
     current_batch = ""
 
+    def split_by_words(sentence, max_len):
+        """Split a long sentence into smaller parts by words."""
+        words = sentence.split()
+        word_batches = []
+        current_part = ""
+        for word in words:
+            if len(current_part.encode('utf-8')) + len(word.encode('utf-8')) + 1 <= max_len:
+                current_part += word + " "
+            else:
+                if current_part:
+                    word_batches.append(current_part.strip())
+                current_part = word + " "
+        if current_part:
+            word_batches.append(current_part.strip())
+        return word_batches
+
+    # Create batches from sentences
     for sentence in sentences:
         if len(current_batch.encode('utf-8')) + len(sentence.encode('utf-8')) <= max_chars:
-            current_batch += sentence
+            current_batch += " " + sentence if current_batch else sentence
         else:
-            # Append the current batch if it exceeds the limit
             if current_batch:
                 batches.append(current_batch.strip())
-            current_batch = sentence  # Start a new batch with the current sentence
+                current_batch = ""
 
-    # Append the last batch if there's remaining text
+            # If a single sentence is too large, split it by words, only if split_words is True
+            if len(sentence.encode('utf-8')) > max_chars and split_words:
+                batches.extend(split_by_words(sentence, max_chars))
+            else:
+                current_batch = sentence
+
     if current_batch:
         batches.append(current_batch.strip())
 
