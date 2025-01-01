@@ -93,17 +93,17 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_chars=200, min_chars=160, split_words=SPLIT_WORDS):
+def segment_text(text, max_chars=120, split_words=SPLIT_WORDS):
     # If the text fits in one batch, return it directly
     if len(text.encode('utf-8')) <= max_chars:
         return [text]
 
     # Add ellipses if the last character isn't one of the specified punctuations
-    if not text or text[-1] not in ['。', '...', ',', '，']:
+    if not text or text[-1] not in ['。', '...', ',', '，', '?', '!']:
         text += '...'
 
-    # Split at ellipses, commas, or commas followed by end quotes, making sure quotes follow punctuation
-    sentences = re.split(r'(\.\.\."?|[,，]"?)', text)
+    # Split at ellipses, commas, or commas followed by end quotes, as well as at ? and !
+    sentences = re.split(r'(\.\.\."?|[,，]"?|[?!]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     batches = []
@@ -134,8 +134,8 @@ def segment_text(text, max_chars=200, min_chars=160, split_words=SPLIT_WORDS):
                 batches.append(current_batch.strip())
                 current_batch = ""
 
-            # If a single sentence is too large, split it by words
-            if len(sentence.encode('utf-8')) > max_chars:
+            # If a single sentence is too large, split it by words, only if split_words is True
+            if len(sentence.encode('utf-8')) > max_chars and split_words:
                 batches.extend(split_by_words(sentence, max_chars))
             else:
                 current_batch = sentence
@@ -143,25 +143,7 @@ def segment_text(text, max_chars=200, min_chars=160, split_words=SPLIT_WORDS):
     if current_batch:
         batches.append(current_batch.strip())
 
-    # Adjust for min_chars and max_chars constraints
-    final_batches = []
-    temp_batch = ""
-    for batch in batches:
-        # Add current batch to temp_batch until we reach min_chars
-        if len(temp_batch.encode('utf-8')) + len(batch.encode('utf-8')) < min_chars:
-            temp_batch += " " + batch if temp_batch else batch
-        else:
-            if len(temp_batch.encode('utf-8')) >= min_chars:
-                final_batches.append(temp_batch.strip())  # Add completed temp_batch
-                temp_batch = batch  # Start a new batch
-            else:
-                # If temp_batch doesn't meet min_chars, merge it with the next batch
-                temp_batch += " " + batch
-
-    if temp_batch:
-        final_batches.append(temp_batch.strip())  # Add the last batch
-
-    return final_batches
+    return batches
 
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
