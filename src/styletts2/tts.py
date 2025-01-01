@@ -81,14 +81,9 @@ SPLIT_WORDS = [
 ]
 
 def preprocess_to_ignore_quotes(text):
-    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    text = re.sub(r'[\n\s]+', ' ', text)
     text = re.sub(r'[“”]', '"', text)  # Remove both fancy quotes and normal quotes
-    # Temporarily replace existing ellipses (...) with a placeholder
-    text = re.sub(r'\.\.\.|\. \. \.|…', '###ELLIPSIS###', text)
-    text = re.sub(r'[.]', '...', text)
-    # Restore the placeholder back to actual ellipses (...)
-    text = re.sub(r'###ELLIPSIS###', '...', text)
-     # Normalize uppercase words to title case unless they are acronyms
+    text = re.sub(r'\.\.\.|\. \. \.|…', '...', text)
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
@@ -99,13 +94,13 @@ def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
         return [text]
 
     # Add ellipses if the last character isn't one of the specified punctuations
-    if not text or text[-1] not in ['。', '...', ',', '，', '?', '!']:
-        text += '...'
+    if not text or text[-1] not in ['。', '.', '...', ',', '，', '?']:
+        text += '.'
 
     # Split at ellipses, commas, or commas followed by end quotes, as well as at ? and !
-    sentences = re.split(r'(\.\.\."?|[,，]"?|[?!]"?)', text)
+    sentences = re.split(r'(\.\.\."?|[,，]"?|[。.?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
-
+    
     batches = []
     current_batch = ""
 
