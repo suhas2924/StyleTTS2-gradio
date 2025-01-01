@@ -93,114 +93,73 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_chars=200, min_chars=180, split_words=SPLIT_WORDS):
+def segment_text(text, max_chars=200, min_chars=160, split_words=SPLIT_WORDS):
     # If the text fits in one batch, return it directly
     if len(text.encode('utf-8')) <= max_chars:
         return [text]
 
-    # Split sentences by ellipses first, keeping the ellipses with the previous sentence
-    if not text or text[-1] not in ['。', '...']:
+    # Add ellipses if the last character isn't one of the specified punctuations
+    if not text or text[-1] not in ['。', '...', ',', '，']:
         text += '...'
-    
-    # Split at ellipses and create batches
-    sentences = re.split(r'(\.\.\."?)', text)  # Split at ellipses
-    sentences = [''.join(i) for i in zip(sentences[0::2], sentences[1::2])]
 
-    # Number of chunks we need
-    total_length = len(text.encode('utf-8'))
-    num_chunks = total_length // max_chars
-    if total_length % max_chars != 0:
-        num_chunks += 1
-
-    # Estimate ideal chunk size (even distribution)
-    ideal_chunk_size = total_length // num_chunks
-
-    # Adjust chunk size to be within [min_chars, max_chars]
-    chunk_size = max(min_chars, min(ideal_chunk_size, max_chars))
+    # Split at ellipses, commas, or commas followed by end quotes, making sure quotes follow punctuation
+    sentences = re.split(r'(\.\.\."?|[,，]"?)', text)
+    sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     batches = []
     current_batch = ""
 
-    def split_by_words(text):
-        words = text.split()
-        current_word_part = ""
+    def split_by_words(sentence, max_len):
+        """Split a long sentence into smaller parts by words."""
+        words = sentence.split()
         word_batches = []
+        current_part = ""
         for word in words:
-            if len(current_word_part.encode('utf-8')) + len(word.encode('utf-8')) + 1 <= chunk_size:
-                current_word_part += word + ' '
+            if len(current_part.encode('utf-8')) + len(word.encode('utf-8')) + 1 <= max_len:
+                current_part += word + " "
             else:
-                if current_word_part:
-                    word_batches.append(current_word_part.strip())
-                current_word_part = word + ' '
-        if current_word_part:
-            word_batches.append(current_word_part.strip())
+                if current_part:
+                    word_batches.append(current_part.strip())
+                current_part = word + " "
+        if current_part:
+            word_batches.append(current_part.strip())
         return word_batches
 
-    # Process sentences logically
+    # Create batches from sentences
     for sentence in sentences:
-        if len(current_batch.encode('utf-8')) + len(sentence.encode('utf-8')) <= chunk_size:
-            current_batch += sentence
+        if len(current_batch.encode('utf-8')) + len(sentence.encode('utf-8')) <= max_chars:
+            current_batch += " " + sentence if current_batch else sentence
         else:
             if current_batch:
-                batches.append(current_batch)
+                batches.append(current_batch.strip())
                 current_batch = ""
 
-            # If the sentence is too long, split it further by logical structures
-            if len(sentence.encode('utf-8')) > chunk_size:
-                colon_parts = sentence.split(':')
-                if len(colon_parts) > 1:
-                    for part in colon_parts:
-                        if len(part.encode('utf-8')) <= chunk_size:
-                            batches.append(part)
-                        else:
-                            comma_parts = re.split(r'([,，]"?)', part)
-                            if len(comma_parts) > 1:
-                                current_comma_part = ""
-                                for comma_part in comma_parts:
-                                    if len(current_comma_part.encode('utf-8')) + len(comma_part.encode('utf-8')) <= chunk_size:
-                                        current_comma_part += comma_part
-                                    else:
-                                        if current_comma_part:
-                                            batches.append(current_comma_part.strip())
-                                        current_comma_part = comma_part
-                                if current_comma_part:
-                                    batches.append(current_comma_part.strip())
-                            else:
-                                batches.extend(split_by_words(part))
-                else:
-                    comma_parts = re.split(r'([,，]"?)', sentence)
-                    if len(comma_parts) > 1:
-                        current_comma_part = ""
-                        for comma_part in comma_parts:
-                            if len(current_comma_part.encode('utf-8')) + len(comma_part.encode('utf-8')) <= chunk_size:
-                                current_comma_part += comma_part
-                            else:
-                                if current_comma_part:
-                                    batches.append(current_comma_part.strip())
-                                current_comma_part = comma_part
-                        if current_comma_part:
-                            batches.append(current_comma_part.strip())
-                    else:
-                        batches.extend(split_by_words(sentence))
+            # If a single sentence is too large, split it by words
+            if len(sentence.encode('utf-8')) > max_chars:
+                batches.extend(split_by_words(sentence, max_chars))
             else:
                 current_batch = sentence
 
     if current_batch:
-        batches.append(current_batch)
+        batches.append(current_batch.strip())
 
-    # Adjust the last few batches to make sure they are within the size limits
+    # Adjust for min_chars and max_chars constraints
     final_batches = []
     temp_batch = ""
     for batch in batches:
-        if len(temp_batch.encode('utf-8')) + len(batch.encode('utf-8')) <= chunk_size:
-            temp_batch += " " + batch
+        # Add current batch to temp_batch until we reach min_chars
+        if len(temp_batch.encode('utf-8')) + len(batch.encode('utf-8')) < min_chars:
+            temp_batch += " " + batch if temp_batch else batch
         else:
-            if temp_batch:
-                final_batches.append(temp_batch.strip())
-            temp_batch = batch
+            if len(temp_batch.encode('utf-8')) >= min_chars:
+                final_batches.append(temp_batch.strip())  # Add completed temp_batch
+                temp_batch = batch  # Start a new batch
+            else:
+                # If temp_batch doesn't meet min_chars, merge it with the next batch
+                temp_batch += " " + batch
 
     if temp_batch:
-        final_batches.append(temp_batch.strip())
+        final_batches.append(temp_batch.strip())  # Add the last batch
 
     return final_batches
 
