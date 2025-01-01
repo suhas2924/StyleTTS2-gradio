@@ -98,40 +98,51 @@ def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
         text += '.'
 
     # Split at ellipses, commas, or commas followed by end quotes, as well as at ? and !
-    sentences = re.split(r'(\.\.\."?|[,，]"?|[。.?]"?)', text)
+    sentences = re.split(r'(\.\.\."?|[。.,，?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
-    
+
     batches = []
     current_batch = ""
 
-    def split_by_words(sentence, max_len):
+    def split_by_words(text):
         """Split a long sentence into smaller parts by words."""
-        words = sentence.split()
+        words = text.split()
+        current_word_part = ""
         word_batches = []
-        current_part = ""
         for word in words:
-            if len(current_part.encode('utf-8')) + len(word.encode('utf-8')) + 1 <= max_len:
-                current_part += word + " "
+            if len(current_word_part.encode('utf-8')) + len(word.encode('utf-8')) + 1 <= max_chars:
+                current_word_part += word + ' '
             else:
-                if current_part:
-                    word_batches.append(current_part.strip())
-                current_part = word + " "
-        if current_part:
-            word_batches.append(current_part.strip())
+                if current_word_part:
+                    # Try to find a suitable split word
+                    for split_word in split_words:
+                        split_index = current_word_part.rfind(' ' + split_word + ' ')
+                        if split_index != -1:
+                            word_batches.append(current_word_part[:split_index].strip())
+                            current_word_part = current_word_part[split_index:].strip() + ' '
+                            break
+                    else:
+                        # If no suitable split word found, just append the current part
+                        word_batches.append(current_word_part.strip())
+                        current_word_part = ""
+                current_word_part += word + ' '
+        if current_word_part:
+            word_batches.append(current_word_part.strip())
         return word_batches
 
     # Create batches from sentences
     for sentence in sentences:
         if len(current_batch.encode('utf-8')) + len(sentence.encode('utf-8')) <= max_chars:
-            current_batch += " " + sentence if current_batch else sentence
+            current_batch += sentence
         else:
+            # If adding this sentence would exceed the limit
             if current_batch:
-                batches.append(current_batch.strip())
+                batches.append(current_batch)
                 current_batch = ""
 
             # If a single sentence is too large, split it by words, only if split_words is True
-            if len(sentence.encode('utf-8')) > max_chars and split_words:
-                batches.extend(split_by_words(sentence, max_chars))
+            if len(sentence.encode('utf-8')) > max_chars:
+                batches.extend(split_by_words(sentence))
             else:
                 current_batch = sentence
 
