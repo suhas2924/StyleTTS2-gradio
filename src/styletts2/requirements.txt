@@ -6,7 +6,6 @@ pydub
 pyyaml
 librosa
 nltk
-ntlk-punkt
 matplotlib
 accelerate
 transformers
