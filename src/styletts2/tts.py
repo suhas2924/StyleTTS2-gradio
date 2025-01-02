@@ -19,6 +19,8 @@ from phonemizer.backend.base import BaseBackend
 from phonemizer.punctuation import Punctuation
 from phonemizer import phonemize
 
+import os
+import re
 
 import random
 random.seed(0)
