@@ -71,17 +71,6 @@ import phonemizer
 global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', punctuation_marks=Punctuation.default_marks(), preserve_punctuation=True, with_stress=True)
 # phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
-SPLIT_WORDS = [
-    "but", "then", "so", "however", "nevertheless", "yet", "still", "accordingly", "consequently",
-    "therefore", "thus", "hence", "consequently", "after", "subsequently",
-    "moreover", "furthermore", "additionally", "nonetheless", "also", "besides",
-    "meanwhile", "alternatively", "otherwise", "nevertheless", "meanwhile",
-    "namely", "specifically", "for example", "such as", "and",
-    "in fact", "indeed", "notably", "instead", "likewise",
-    "in contrast", "on the other hand", "conversely",
-    "in conclusion", "to summarize", "finally"
-]
-
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
     text = re.sub(r'[“”]', '"', text)  
@@ -92,53 +81,28 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
     
-def segment_text(text, max_chars=200, split_words=SPLIT_WORDS):
-    # If the text fits in one batch, return it directly
-    if len(text.encode('utf-8')) <= max_chars:
-        return [text]
-
-    # Add ellipses if the last character isn't one of the specified punctuations
-    if not text or text[-1] not in ['。', '...', ',']:
-        text += '...'
-
-    # Split at ellipses, commas, or commas followed by end quotes
-    sentences = re.split(r'(\.\.\."?|[,]"?)', text)
+def segment_text(text, max_chars=200):
+    # Split the text by punctuation while retaining the delimiters
+    sentences = re.split(r'(\.\.\."?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
+
+    # Calculate an approximate chunk size for balanced splitting
+    total_chars = len(text)
+    approx_chunk_size = total_chars // ((total_chars + max_chars - 1) // max_chars)
 
     batches = []
     current_batch = ""
 
-    def split_by_words(sentence, max_len):
-        """Split a long sentence into smaller parts by words."""
-        words = sentence.split()
-        word_batches = []
-        current_part = ""
-        for word in words:
-            if len(current_part.encode('utf-8')) + len(word.encode('utf-8')) + 1 <= max_len:
-                current_part += word + " "
-            else:
-                if current_part:
-                    word_batches.append(current_part.strip())
-                current_part = word + " "
-        if current_part:
-            word_batches.append(current_part.strip())
-        return word_batches
-
-    # Create batches from sentences
+    # Combine sentences into balanced chunks
     for sentence in sentences:
-        if len(current_batch.encode('utf-8')) + len(sentence.encode('utf-8')) <= max_chars:
+        if len((current_batch + " " + sentence).encode('utf-8')) <= approx_chunk_size:
             current_batch += " " + sentence if current_batch else sentence
         else:
             if current_batch:
                 batches.append(current_batch.strip())
-                current_batch = ""
-
-            # If a single sentence is too large, split it by words, only if split_words is True
-            if len(sentence.encode('utf-8')) > max_chars and split_words:
-                batches.extend(split_by_words(sentence, max_chars))
-            else:
                 current_batch = sentence
 
+    # Add the last batch if not empty
     if current_batch:
         batches.append(current_batch.strip())
 
