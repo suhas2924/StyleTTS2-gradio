@@ -78,25 +78,29 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
-    
-def segment_text(text, max_chars=120):
+
+def segment_text(text, min_chars=90, max_chars=120):
     # Split the text by punctuation while retaining the delimiters
     sentences = re.split(r'(\.\.\."?|[.,!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
-    # Calculate an approximate chunk size for balanced splitting
-    total_chars = len(text)
-    approx_chunk_size = total_chars // ((total_chars + max_chars - 1) // max_chars)
-
     batches = []
     current_batch = ""
 
-    # Combine sentences into balanced chunks
+    # Combine sentences into chunks within the specified range
     for sentence in sentences:
-        if len((current_batch + " " + sentence).encode('utf-8')) <= approx_chunk_size:
-            current_batch += " " + sentence if current_batch else sentence
+        # Check the current batch size after adding the sentence
+        new_batch = current_batch + " " + sentence if current_batch else sentence
+        new_batch_size = len(new_batch.encode('utf-8'))
+
+        if new_batch_size <= max_chars:
+            current_batch = new_batch
         else:
-            if current_batch:
+            # If the current batch is smaller than min_chars, try to include the sentence
+            if len(current_batch.encode('utf-8')) < min_chars:
+                current_batch = new_batch
+            else:
+                # Otherwise, finalize the current batch and start a new one
                 batches.append(current_batch.strip())
                 current_batch = sentence
 
