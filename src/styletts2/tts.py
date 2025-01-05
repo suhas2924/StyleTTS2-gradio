@@ -81,7 +81,7 @@ def preprocess_to_ignore_quotes(text):
 
 def segment_text(text, min_chars=150, max_chars=200):
     # Split the text by punctuation while retaining the delimiters
-    sentences = re.split(r'([...]"?|[.!?]"?)', text)
+    sentences = re.split(r'([...]"?|[.?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     batches = []
