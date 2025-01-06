@@ -73,14 +73,15 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', punctuati
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
-    text = re.sub(r'[“”]', '"', text)  
+    text = re.sub(r'[“”]', '"', text)
+    text = re.sub(r'\.\.\.|\. \. \.', '…', text)
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
 def segment_text(text, min_chars=150, max_chars=200):
     # Split the text by punctuation while retaining the delimiters
-    sentences = re.split(r'([\.\.\.|…]"?|[.?]"?)', text)
+    sentences = re.split(r'([…]"?|[.,?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     batches = []
@@ -374,10 +375,12 @@ class StyleTTS2:
         text = preprocess_to_ignore_quotes(text)
     
         text_segments = segment_text(text)
-
         # Replace only the last period or comma at the end of the segment with ellipsis
-        text_segments = [re.sub(r'(\.|\.\.\.|\. \. \.|…)', '...', text_segment) for text_segment in text_segments]
+        text_segments = [re.sub(r'(\.|…)', '...', text_segment) for text_segment in text_segments]
+        # Replace only the last period or comma at the end of the segment with ellipsis
+        text_segments = [re.sub(r'([,])(?=["\s]*["]?$)', '...', text_segment) for text_segment in text_segments]
     
+        
         segments = []
         prev_s = None
         for text_segment in text_segments:
