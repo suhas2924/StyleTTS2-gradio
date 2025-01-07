@@ -74,14 +74,14 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', punctuati
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
     text = re.sub(r'[“”]', '"', text)
-    text = re.sub(r'\.\.\.|\. \. \.', '…', text)
+    text = re.sub(r'\.\.\.|\. \. \.|…', '...', text)
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, min_chars=150, max_chars=200):
+def segment_text(text, min_chars=250, max_chars=300):
     # Split the text by punctuation while retaining the delimiters
-    sentences = re.split(r'([…]"?|[.,?]"?)', text)
+    sentences = re.split(r'([...]"?|[.,?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     batches = []
@@ -232,7 +232,7 @@ class StyleTTS2:
                   diffusion_steps=5,
                   embedding_scale=1,
                   ref_s=None,
-                  use_gruut=False):
+                  phonemize=True):
         """
         Text-to-speech function
         :param text: Input text to turn into speech.
@@ -257,7 +257,8 @@ class StyleTTS2:
                                        beta=beta,
                                        diffusion_steps=diffusion_steps,
                                        embedding_scale=embedding_scale,
-                                       ref_s=ref_s)
+                                       ref_s=ref_s,
+                                       phonemize=phonemize)
 
         if ref_s is None:
             # default to clone https://styletts2.github.io/wavs/LJSpeech/OOD/GT/00001.wav voice from LibriVox (public domain)
@@ -348,7 +349,7 @@ class StyleTTS2:
                        diffusion_steps=5,
                        embedding_scale=1,
                        ref_s=None,
-                       use_gruut=False):
+                       phonemize=True):
         """
         Inference for longform text. Used automatically in inference() when needed.
         :param text: Input text to turn into speech.
@@ -376,8 +377,6 @@ class StyleTTS2:
     
         text_segments = segment_text(text)
         # Replace only the last period or comma at the end of the segment with ellipsis
-        text_segments = [re.sub(r'(\.|…)', '...', text_segment) for text_segment in text_segments]
-        # Replace only the last period or comma at the end of the segment with ellipsis
         text_segments = [re.sub(r'([,])(?=["\s]*["]?$)', '...', text_segment) for text_segment in text_segments]
     
         
@@ -391,7 +390,8 @@ class StyleTTS2:
                                                                  beta=beta,
                                                                  t=t,
                                                                  diffusion_steps=diffusion_steps,
-                                                                 embedding_scale=embedding_scale)
+                                                                 embedding_scale=embedding_scale,
+                                                                 phonemize=phonemize)
             segments.append(segment_output)
         output = np.concatenate(segments)
         if output_wav_file:
@@ -407,7 +407,7 @@ class StyleTTS2:
                                t=0.7,
                                diffusion_steps=5,
                                embedding_scale=1,
-                               use_gruut=False):
+                               phonemize=False):
         """
         Performs inference for segment of longform text; see long_inference()
         :param text: Input text
