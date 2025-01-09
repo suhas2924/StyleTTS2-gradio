@@ -346,7 +346,7 @@ class StyleTTS2:
                        output_sample_rate=24000,
                        alpha=0.3,
                        beta=0.7,
-                       t=1.0,
+                       t=0.7,
                        diffusion_steps=5,
                        embedding_scale=1,
                        ref_s=None,
@@ -405,7 +405,7 @@ class StyleTTS2:
                                ref_s,
                                alpha=0.3,
                                beta=0.7,
-                               t=1.0,
+                               t=0.7,
                                diffusion_steps=5,
                                embedding_scale=1,
                                phonemize=True):
@@ -423,7 +423,8 @@ class StyleTTS2:
         """
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text])
-        phoneme_string = ' '.join(phonemized_text).strip()  # Join the list into a single string                           
+        ps = word_tokenize(phonemized_text[0])
+        phoneme_string = ' '.join(ps).strip()  # Join the list into a single string                           
         print (f"Phoneme: {phoneme_string}")
 
         textcleaner = TextCleaner()
