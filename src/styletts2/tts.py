@@ -423,14 +423,15 @@ class StyleTTS2:
         """
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text])
-        phoneme_string = ' '.join(phonemized_text).strip()  # Join the list into a single string                           
+        ps = word_tokenize(phonemized_text)
+        phoneme_string = ' '.join(ps).strip()  # Join the list into a single string                           
         print (f"Phoneme: {phoneme_string}")
 
-        # Generate tokens from the phoneme string
-        tokens = torch.LongTensor([ord(ch) for ch in phoneme_string]).to(self.device).unsqueeze(0)
-        # Add the required start token (if applicable)
-        tokens = torch.cat([torch.LongTensor([[0]]).to(self.device), tokens], dim=1)
-
+        textcleaner = TextCleaner()
+        tokens = textcleaner(phoneme_string)
+        tokens.insert(0, 0)
+        tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
+                                   
         with torch.no_grad():
             input_lengths = torch.LongTensor([tokens.shape[-1]]).to(self.device)
             text_mask = length_to_mask(input_lengths).to(self.device)
