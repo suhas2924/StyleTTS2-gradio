@@ -346,7 +346,7 @@ class StyleTTS2:
                        output_sample_rate=24000,
                        alpha=0.3,
                        beta=0.7,
-                       t=0.4,
+                       t=1.0,
                        diffusion_steps=5,
                        embedding_scale=1,
                        ref_s=None,
@@ -405,7 +405,7 @@ class StyleTTS2:
                                ref_s,
                                alpha=0.3,
                                beta=0.7,
-                               t=0.4,
+                               t=1.0,
                                diffusion_steps=5,
                                embedding_scale=1,
                                phonemize=True):
