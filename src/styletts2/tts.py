@@ -426,8 +426,10 @@ class StyleTTS2:
         phoneme_string = ' '.join(phonemized_text).strip()  # Join the list into a single string                           
         print (f"Phoneme: {phoneme_string}")
 
-        tokens.insert(0, 0)
-        tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
+        # Generate tokens from the phoneme string
+        tokens = torch.LongTensor([ord(ch) for ch in phoneme_string]).to(self.device).unsqueeze(0)
+        # Add the required start token (if applicable)
+        tokens = torch.cat([torch.LongTensor([[0]]).to(self.device), tokens], dim=1)
 
         with torch.no_grad():
             input_lengths = torch.LongTensor([tokens.shape[-1]]).to(self.device)
