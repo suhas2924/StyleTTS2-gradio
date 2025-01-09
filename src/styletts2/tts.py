@@ -494,5 +494,5 @@ class StyleTTS2:
             out = self.model.decoder(asr,
                                 F0_pred, N_pred, ref.squeeze().unsqueeze(0))
 
-        return out.squeeze().cpu().numpy()[..., :-100], s_pred
+        return out.squeeze().cpu().numpy()[..., :-500], s_pred
     
