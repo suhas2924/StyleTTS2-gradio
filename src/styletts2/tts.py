@@ -26,6 +26,7 @@ np.random.seed(0)
 
 import yaml
 
+from txtsplit import txtsplit
 from . import models
 from . import utils
 from .text_utils import TextCleaner
