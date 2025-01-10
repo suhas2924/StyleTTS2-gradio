@@ -52,7 +52,7 @@ DEFAULT_TARGET_VOICE_URL = "https://styletts2.github.io/wavs/LJSpeech/OOD/GT/000
 SINGLE_INFERENCE_MAX_LEN = 420
 
 to_mel = torchaudio.transforms.MelSpectrogram(
-    n_mels=80, n_fft=2048, win_length=1200, hop_length=300)
+    n_mels=80, n_fft=2048, win_length=1200, hop_length=200)
 mean, std = -4, 4
 
 
