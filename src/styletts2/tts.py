@@ -52,7 +52,7 @@ DEFAULT_TARGET_VOICE_URL = "https://styletts2.github.io/wavs/LJSpeech/OOD/GT/000
 SINGLE_INFERENCE_MAX_LEN = 420
 
 to_mel = torchaudio.transforms.MelSpectrogram(
-    n_mels=80, n_fft=2048, win_length=1200, hop_length=200)
+    n_mels=80, n_fft=2048, win_length=1200, hop_length=300)
 mean, std = -4, 4
 
 
@@ -494,5 +494,5 @@ class StyleTTS2:
             out = self.model.decoder(asr,
                                 F0_pred, N_pred, ref.squeeze().unsqueeze(0))
 
-        return out.squeeze().cpu().numpy()[..., :-50], s_pred
+        return out.squeeze().cpu().numpy()[..., :-1000], s_pred
     
