@@ -34,8 +34,8 @@ from .Utils.PLBERT.util import load_plbert
 from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSchedule
 
 
-LIBRI_TTS_CHECKPOINT_URL = "https://huggingface.co/ShoukanLabs/Vokan/resolve/main/Model/epoch_2nd_00012.pth"
-LIBRI_TTS_CONFIG_URL = "https://huggingface.co/ShoukanLabs/Vokan/resolve/main/Model/config.yml?download=true"
+LIBRI_TTS_CHECKPOINT_URL = "https://huggingface.co/yl4579/StyleTTS2-LibriTTS/resolve/main/Models/LibriTTS/epochs_2nd_00020.pth"
+LIBRI_TTS_CONFIG_URL = "https://huggingface.co/yl4579/StyleTTS2-LibriTTS/resolve/main/Models/LibriTTS/config.yml?download=true"
 
 ASR_CHECKPOINT_URL = "https://github.com/yl4579/StyleTTS2/raw/main/Utils/ASR/epoch_00080.pth"
 ASR_CONFIG_URL = "https://github.com/yl4579/StyleTTS2/raw/main/Utils/ASR/config.yml"
@@ -70,6 +70,7 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
+    text = re.sub(r'\n+', ' ', text)  # Replace multiple newlines with a single space
     text = re.sub(r'\.\.\.|\. \. \.', '…', text)
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
@@ -78,7 +79,7 @@ def preprocess_to_ignore_quotes(text):
 
 def segment_text(text, min_chars=100, max_chars=200):
     # Split the text by punctuation while retaining the delimiters
-    sentences = re.split(r'([.?]"?)', text)
+    sentences = re.split(r'([.]”?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
     
     batches = []
