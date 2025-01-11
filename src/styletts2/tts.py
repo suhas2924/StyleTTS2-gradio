@@ -1,7 +1,3 @@
-from nltk.tokenize import word_tokenize
-import nltk
-nltk.download('punkt_tab')
-
 from pathlib import Path
 import librosa
 import scipy
@@ -242,10 +238,7 @@ class StyleTTS2:
 
         text = text.strip()
         ps = global_phonemizer.phonemize([text])
-        ps = word_tokenize(ps[0])
         ps = ' '.join(ps).strip()
-        ps = ps.replace('``', '"')
-        ps = ps.replace("''", '"')
 
         textcleaner = TextCleaner()
         tokens = textcleaner(ps)
@@ -394,10 +387,7 @@ class StyleTTS2:
         """
         text = text.strip()
         ps = global_phonemizer.phonemize([text])
-        ps = word_tokenize(ps[0])
         ps = ' '.join(ps).strip()  # Join the list into a single string    
-        ps = ps.replace('``', '"')
-        ps = ps.replace("''", '"')
         print (f"Phoneme: {ps}")
 
         textcleaner = TextCleaner()
