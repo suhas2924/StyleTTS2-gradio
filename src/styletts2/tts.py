@@ -76,7 +76,7 @@ def preprocess_to_ignore_quotes(text):
     return text
 
 def segment_text(text):
-    segments = txtsplit(text, desired_length=200, max_length=300)
+    segments = txtsplit(text, desired_length=100, max_length=200)
     return segments
 
 class StyleTTS2:
