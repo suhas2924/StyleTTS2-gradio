@@ -1,3 +1,7 @@
+import nltk
+nltk.download('punkt')
+from nltk.tokenize import word_tokenize
+
 from pathlib import Path
 import librosa
 import scipy
@@ -34,8 +38,8 @@ from .Utils.PLBERT.util import load_plbert
 from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSchedule
 
 
-LIBRI_TTS_CHECKPOINT_URL = "https://huggingface.co/yl4579/StyleTTS2-LibriTTS/resolve/main/Models/LibriTTS/epochs_2nd_00020.pth"
-LIBRI_TTS_CONFIG_URL = "https://huggingface.co/yl4579/StyleTTS2-LibriTTS/resolve/main/Models/LibriTTS/config.yml?download=true"
+LIBRI_TTS_CHECKPOINT_URL = "https://huggingface.co/ShoukanLabs/Vokan/resolve/main/Model/epoch_2nd_00012.pth"
+LIBRI_TTS_CONFIG_URL = "https://huggingface.co/ShoukanLabs/Vokan/resolve/main/Model/config.yml?download=true"
 
 ASR_CHECKPOINT_URL = "https://github.com/yl4579/StyleTTS2/raw/main/Utils/ASR/epoch_00080.pth"
 ASR_CONFIG_URL = "https://github.com/yl4579/StyleTTS2/raw/main/Utils/ASR/config.yml"
@@ -65,7 +69,7 @@ def preprocess(wave):
     return mel_tensor
 
 import phonemizer
-global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=False, with_stress=False)
+global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True, with_stress=True)
 # phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
 def preprocess_to_ignore_quotes(text):
@@ -76,7 +80,7 @@ def preprocess_to_ignore_quotes(text):
     return text
 
 
-def segment_text(text, min_chars=100, max_chars=200):
+def segment_text(text, min_chars=100, max_chars=150):
     # Split the text by punctuation while retaining the delimiters
     sentences = re.split(r'([.?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
@@ -266,7 +270,10 @@ class StyleTTS2:
 
         text = text.strip()
         ps = global_phonemizer.phonemize([text])
+        ps = word_tokenize(ps[0])
         ps = ' '.join(ps).strip()
+        ps = ps.replace('``', '"')
+        ps = ps.replace("''", '"')
 
         textcleaner = TextCleaner()
         tokens = textcleaner(ps)
@@ -415,7 +422,10 @@ class StyleTTS2:
         """
         text = text.strip()
         ps = global_phonemizer.phonemize([text])
+        ps = word_tokenize(ps[0])
         ps = ' '.join(ps).strip()  # Join the list into a single string    
+        ps = ps.replace('``', '"')
+        ps = ps.replace("''", '"')
         print (f"Phoneme: {ps}")
 
         textcleaner = TextCleaner()
