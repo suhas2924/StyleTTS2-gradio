@@ -17,6 +17,7 @@ from phonemizer import phonemize
 
 import os
 import re
+from tqdm import tqdm
 
 import random
 random.seed(0)
@@ -377,7 +378,7 @@ class StyleTTS2:
         
         segments = []
         prev_s = None
-        for text_segment in progress.tqdm(text_segments):
+        for text_segment in progress.tqdm(text_segments, desc="Processing Text Segments"):
             print(f"text_segment: {text_segment}")
             segment_output, prev_s = self.long_inference_segment(text_segment,
                                                                  prev_s,
