@@ -417,12 +417,12 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
-        ps = global_phonemizer.phonemize([text])
-        ps = ' '.join(ps).strip()  # Join the list into a single string    
-        print (f"Phoneme: {ps}")
+        phonemized_text = global_phonemizer.phonemize([text])
+        phoneme_string = ' '.join(phonemized_text).strip()  # Join the list into a single string    
+        print (f"Phoneme: {phoneme_string}")
 
         textcleaner = TextCleaner()
-        tokens = textcleaner(ps)
+        tokens = textcleaner(phoneme_string)
         tokens.insert(0, 0)
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
                                    
