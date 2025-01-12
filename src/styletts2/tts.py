@@ -76,37 +76,9 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-
-def segment_text(text, min_chars=200, max_chars=300):
-    # Split the text by punctuation while retaining the delimiters
-    sentences = re.split(r'([.]”?)', text)
-    sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
-    
-    batches = []
-    current_batch = ""
-
-    # Combine sentences into chunks within the specified range
-    for sentence in sentences:
-        # Check the current batch size after adding the sentence
-        new_batch = current_batch + " " + sentence if current_batch else sentence
-        new_batch_size = len(new_batch.encode('utf-8'))
-
-        if new_batch_size <= max_chars:
-            current_batch = new_batch
-        else:
-            # If the current batch is smaller than min_chars, try to include the sentence
-            if len(current_batch.encode('utf-8')) < min_chars:
-                current_batch = new_batch
-            else:
-                # Otherwise, finalize the current batch and start a new one
-                batches.append(current_batch.strip())
-                current_batch = sentence
-
-    # Add the last batch if not empty
-    if current_batch:
-        batches.append(current_batch.strip())
-
-    return batches
+def segment_text(text):
+    segments = txtsplit(text, desired_length=200, max_length=300)
+    return segments
 
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
