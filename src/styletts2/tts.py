@@ -1,7 +1,3 @@
-import nltk
-nltk.download('punkt')
-from nltk.tokenize import sent_tokenize
-
 from pathlib import Path
 import librosa
 import scipy
@@ -81,7 +77,7 @@ def preprocess_to_ignore_quotes(text):
     return text
 
 
-def segment_text(text, min_chars=100, max_chars=200):
+def segment_text(text, min_chars=200, max_chars=300):
     # Split the text by punctuation while retaining the delimiters
     sentences = re.split(r'([.]”?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
@@ -271,7 +267,6 @@ class StyleTTS2:
 
         text = text.strip()
         ps = global_phonemizer.phonemize([text])
-        ps = sent_tokenize(ps[0])
         ps = ' '.join(ps).strip()
         print (f"Phoneme: {ps}")
     
