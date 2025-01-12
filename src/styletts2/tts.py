@@ -1,6 +1,6 @@
 import nltk
 nltk.download('punkt')
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import sent_tokenize
 
 from pathlib import Path
 import librosa
@@ -271,10 +271,8 @@ class StyleTTS2:
 
         text = text.strip()
         ps = global_phonemizer.phonemize([text])
-        ps = word_tokenize(ps[0])
+        ps = sent_tokenize(ps[0])
         ps = ' '.join(ps).strip()
-        ps = ps.replace('``', '“')
-        ps = ps.replace("''", '”')
         print (f"Phoneme: {ps}")
     
         textcleaner = TextCleaner()
