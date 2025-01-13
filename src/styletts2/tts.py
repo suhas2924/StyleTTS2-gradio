@@ -242,9 +242,8 @@ class StyleTTS2:
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
         text = text.strip()
-        sentences = sent_tokenize(text)
-        phonemized_sentences = [global_phonemizer.phonemize([sentence]) for sentence in sentences]
-        phoneme_string = ' '.join([' '.join(sentence) for sentence in phonemized_sentences]).strip()
+        phonemized_text = global_phonemizer.phonemize([text]) 
+        phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
@@ -394,9 +393,8 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
-        sentences = sent_tokenize(text)
-        phonemized_sentences = [global_phonemizer.phonemize([sentence]) for sentence in sentences]
-        phoneme_string = ' '.join([' '.join(sentence) for sentence in phonemized_sentences]).strip()
+        phonemized_text = global_phonemizer.phonemize([text]) 
+        phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
