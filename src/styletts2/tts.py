@@ -291,7 +291,7 @@ class StyleTTS2:
 
             # encode prosody
             en = (d.transpose(-1, -2) @ pred_aln_trg.unsqueeze(0).to(self.device))
-            if self.model_params.decoder.type == "hifigan":
+            if self.model_params.decoder.type == "bigvgan":
                 asr_new = torch.zeros_like(en)
                 asr_new[:, :, 0] = en[:, :, 0]
                 asr_new[:, :, 1:] = en[:, :, 0:-1]
@@ -300,7 +300,7 @@ class StyleTTS2:
             F0_pred, N_pred = self.model.predictor.F0Ntrain(en, s)
 
             asr = (t_en @ pred_aln_trg.unsqueeze(0).to(self.device))
-            if self.model_params.decoder.type == "hifigan":
+            if self.model_params.decoder.type == "bigvgan":
                 asr_new = torch.zeros_like(asr)
                 asr_new[:, :, 0] = asr[:, :, 0]
                 asr_new[:, :, 1:] = asr[:, :, 0:-1]
@@ -448,7 +448,7 @@ class StyleTTS2:
 
             # encode prosody
             en = (d.transpose(-1, -2) @ pred_aln_trg.unsqueeze(0).to(self.device))
-            if self.model_params.decoder.type == "hifigan":
+            if self.model_params.decoder.type == "bigvgan":
                 asr_new = torch.zeros_like(en)
                 asr_new[:, :, 0] = en[:, :, 0]
                 asr_new[:, :, 1:] = en[:, :, 0:-1]
@@ -457,7 +457,7 @@ class StyleTTS2:
             F0_pred, N_pred = self.model.predictor.F0Ntrain(en, s)
 
             asr = (t_en @ pred_aln_trg.unsqueeze(0).to(self.device))
-            if self.model_params.decoder.type == "hifigan":
+            if self.model_params.decoder.type == "bigvgan":
                 asr_new = torch.zeros_like(asr)
                 asr_new[:, :, 0] = asr[:, :, 0]
                 asr_new[:, :, 1:] = asr[:, :, 0:-1]
