@@ -1,6 +1,6 @@
 import nltk
 nltk.download('punkt')
-from nltk.tokenize import sent_tokenize
+from nltk.tokenize import word_tokenize
 
 from pathlib import Path
 import librosa
@@ -16,6 +16,7 @@ import sys
 from phonemizer.backend import EspeakBackend
 from phonemizer.backend.base import BaseBackend
 from phonemizer.backend.espeak.wrapper import EspeakWrapper
+from phonemizer.separator import default_separator, Separator
 from phonemizer.punctuation import Punctuation
 from phonemizer import phonemize
 
@@ -69,7 +70,7 @@ def preprocess(wave):
     return mel_tensor
 
 import phonemizer
-global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True, with_stress=True)
+global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', separator=default_separator, preserve_punctuation=True, punctuation_marks=Punctuation.default_marks(), with_stress=True)
 # phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
 def preprocess_to_ignore_quotes(text):
@@ -394,7 +395,8 @@ class StyleTTS2:
         """
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text]) 
-        phoneme_string = ' '.join(phonemized_text).strip()
+        ps = word_tokenize(phonemized_text[0])
+        phoneme_string = ' '.join(ps).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
