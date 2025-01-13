@@ -76,6 +76,7 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
     text = re.sub(r'\n+', ' ', text)  # Replace multiple newlines with a single space
+    text = re.sub(r'[“”"]', '', text).strip()
     text = re.sub(r'\.\.\.|\. \. \.', '…', text)
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
@@ -351,8 +352,7 @@ class StyleTTS2:
         text = preprocess_to_ignore_quotes(text)
     
         text_segments = segment_text(text)
-        text_segments = [re.sub(r'^"|(?<=\s)"', '“', re.sub(r'"(?=\s|$)', '”', text_segment)) for text_segment in text_segments]
-        text_segments = [re.sub(r'([.,])(?=[”\s]*[”]?$)', '...', text_segment) for text_segment in text_segments]
+        
         segments = []
         prev_s = None
         for text_segment in text_segments:
@@ -395,8 +395,7 @@ class StyleTTS2:
         """
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text], separator=default_separator) 
-        ps = word_tokenize(phonemized_text[0])
-        phoneme_string = ' '.join(ps).strip()
+        phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
