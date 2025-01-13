@@ -70,7 +70,7 @@ def preprocess(wave):
     return mel_tensor
 
 import phonemizer
-global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', separator=default_separator, preserve_punctuation=True, punctuation_marks=Punctuation.default_marks(), with_stress=True)
+global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True, punctuation_marks=Punctuation.default_marks(), with_stress=True)
 # phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
 
 def preprocess_to_ignore_quotes(text):
@@ -394,7 +394,7 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
-        phonemized_text = global_phonemizer.phonemize([text]) 
+        phonemized_text = global_phonemizer.phonemize([text], separator=default_separator) 
         ps = word_tokenize(phonemized_text[0])
         phoneme_string = ' '.join(ps).strip()
         print (f"Phoneme: {phoneme_string}")
