@@ -48,7 +48,7 @@ model_params:
 
   # config for decoder
   decoder: 
-      type: 'istftnet' # either hifigan or istftnet
+      type: 'hifigan' # either hifigan or istftnet
       resblock_kernel_sizes: [3,7,11]
       upsample_rates :  [10, 6]
       upsample_initial_channel: 512
