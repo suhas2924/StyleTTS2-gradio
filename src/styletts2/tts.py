@@ -391,7 +391,7 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
-        phonemized_text = global_phonemizer.phonemize([text], separator=separator.Separator(phone='_'), strip=True) 
+        phonemized_text = global_phonemizer.phonemize([text], separator=Separator(phone='-', word=' '), strip=True) 
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
