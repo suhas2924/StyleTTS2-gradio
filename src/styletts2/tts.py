@@ -79,7 +79,7 @@ def preprocess_to_ignore_quotes(text):
     return text
 
 def segment_text(text):
-    segments = txtsplit(text, desired_length=100, max_length=200)
+    segments = txtsplit(text, desired_length=200, max_length=300)
     return segments
 
 class StyleTTS2:
@@ -348,7 +348,7 @@ class StyleTTS2:
         text = preprocess_to_ignore_quotes(text)
     
         text_segments = segment_text(text)
-        text_segments = [re.sub(r'([.,])(?=["\s]*["]?$)', '...', text_segment) for text_segment in text_segments]
+        text_segments = [re.sub(r'([.,])(?=["\s]*["]?$)', '…', text_segment) for text_segment in text_segments]
         
         segments = []
         prev_s = None
@@ -391,7 +391,7 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
-        phonemized_text = global_phonemizer.phonemize([text], separator=Separator(phone='-', word=' '), strip=True) 
+        phonemized_text = global_phonemizer.phonemize([text], separator=Separator(word=' '), strip=True) 
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
