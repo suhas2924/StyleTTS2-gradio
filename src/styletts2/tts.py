@@ -260,8 +260,9 @@ class StyleTTS2:
 
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text]) 
-        ps = ' '.join(phonemized_text).strip()
-        phoneme_string = re.sub(r'…', '...', ps)
+        phoneme_string = ' '.join(phonemized_text).strip()
+        phoneme_string = phoneme_string.replace('.', '...')
+        phoneme_string = phoneme_string.replace('…', '...')
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
@@ -412,6 +413,7 @@ class StyleTTS2:
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text]) 
         phoneme_string = ' '.join(phonemized_text).strip()
+        phoneme_string = phoneme_string.replace('.', '...')
         phoneme_string = phoneme_string.replace('…', '...')
         print (f"Phoneme: {phoneme_string}")
     
