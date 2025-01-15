@@ -79,25 +79,25 @@ def preprocess_to_ignore_quotes(text):
     return text
 
 def segment_text(text, max_chars=300):
-    # Split the text by punctuation while retaining the delimiters
+    # Split text into sentences with punctuation delimiters
     sentences = re.split(r'([…]"?|[.,]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     batches = []
-    current_batch = ""
+    current_batch = []
 
-    # Combine sentences into chunks within the max_chars limit
+    # Combine sentences into chunks within max_chars limit
     for sentence in sentences:
-        if len((current_batch + " " + sentence).encode('utf-8')) <= max_chars:
-            current_batch += " " + sentence if current_batch else sentence
+        if len(" ".join(current_batch + [sentence]).encode('utf-8')) <= max_chars:
+            current_batch.append(sentence)
         else:
             if current_batch:
-                batches.append(current_batch.strip())
-                current_batch = sentence
+                batches.append(" ".join(current_batch).strip())
+            current_batch = [sentence]
 
-    # Add the last batch if not empty
+    # Add remaining sentences as the final batch
     if current_batch:
-        batches.append(current_batch.strip())
+        batches.append(" ".join(current_batch).strip())
 
     return batches
 
