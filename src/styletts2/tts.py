@@ -83,16 +83,12 @@ def segment_text(text, max_chars=300):
     sentences = re.split(r'([…]"?|[.,]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
-    # Calculate an approximate chunk size for balanced splitting
-    total_chars = len(text)
-    approx_chunk_size = total_chars // ((total_chars + max_chars - 1) // max_chars)
-
     batches = []
     current_batch = ""
 
-    # Combine sentences into balanced chunks
+    # Combine sentences into chunks within the max_chars limit
     for sentence in sentences:
-        if len((current_batch + " " + sentence).encode('utf-8')) <= approx_chunk_size:
+        if len((current_batch + " " + sentence).encode('utf-8')) <= max_chars:
             current_batch += " " + sentence if current_batch else sentence
         else:
             if current_batch:
@@ -370,8 +366,8 @@ class StyleTTS2:
             
         # Preprocess the text (e.g., clean up quotes and spaces)
         text = preprocess_to_ignore_quotes(text)
-        text = re.sub(r'[.]', '...', text)
         text_segments = segment_text(text)
+        text_segments = [re.sub(r'[.]', '...', text_segment) for text_segment in text_segments]
         text_segments = [re.sub(r'([,])(?=[”\s]*[”]?$)', '...', text_segment) for text_segment in text_segments]
         
         segments = []
@@ -416,8 +412,8 @@ class StyleTTS2:
         """
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text]) 
-        ps = ' '.join(phonemized_text).strip()
-        phoneme_string = re.sub(r'…', '...', ps)
+        phoneme_string = ' '.join(phonemized_text).strip()
+        phoneme_string = phoneme_string.replace('…', '...')
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
