@@ -73,14 +73,14 @@ def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
     text = re.sub(r'\n+', ' ', text)  # Replace multiple newlines with a single space
     text = re.sub(r'[“”]', '"', text).strip()
-    text = re.sub(r'\.\.\.|\. \. \.|…|\.', '...', text)
+    text = re.sub(r'\. \. \.|…|\.', '\.\.\.', text)
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
 def segment_text(text, max_chars=300):
     # Split text into sentences with punctuation delimiters
-    sentences = re.split(r'([...]"?|[,?]"?)', text)
+    sentences = re.split(r'([\.\.\.]"?|[,?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     batches = []
@@ -367,7 +367,7 @@ class StyleTTS2:
         # Preprocess the text (e.g., clean up quotes and spaces)
         text = preprocess_to_ignore_quotes(text)
         text_segments = segment_text(text)
-        text_segments = [re.sub(r'([,])(?=[”\s]*[”]?$)', '...', text_segment) for text_segment in text_segments]
+        text_segments = [re.sub(r'([,])(?=[”\s]*[”]?$)', '\.\.\.', text_segment) for text_segment in text_segments]
         
         segments = []
         prev_s = None
@@ -412,7 +412,7 @@ class StyleTTS2:
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text]) 
         phoneme_string = ' '.join(phonemized_text).strip()
-        phoneme_string = phoneme_string.replace('…', '...')
+        phoneme_string = phoneme_string.replace('…', '\.\.\.')
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
