@@ -368,8 +368,8 @@ class StyleTTS2:
         # Preprocess the text (e.g., clean up quotes and spaces)
         text = preprocess_to_ignore_quotes(text)
         text_segments = segment_text(text)
-        text_segments = [re.sub(r'([,])(?=["\s]*["]?$)', '…', text_segment) for text_segment in text_segments]
-        
+        text_segments = [re.sub(r'([,])(?=["\s]*$)', '…', text_segment) for text_segment in text_segments]
+                           
         segments = []
         prev_s = None
         for text_segment in text_segments:
