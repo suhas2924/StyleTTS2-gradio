@@ -71,10 +71,11 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
-    text = re.sub(r'\n+', ' ', text)  # Replace multiple newlines with a single space
-    text = re.sub(r'[“”]', '"', text).strip()
-    text = re.sub(r'\.\.\.|\. \. \.', '…', text)
-    text = re.sub(r'.', '…', text)
+    text = text.replace('“', '"').replace('”', '"')
+    text = text.replace('. . .', '…').replace('...', '…')
+    text = text.replace('.', '…')
+    text = text.strip()
+    text = re.sub(r'\n+', ' ', text)
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
