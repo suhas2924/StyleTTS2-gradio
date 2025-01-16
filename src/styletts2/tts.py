@@ -74,13 +74,14 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'\n+', ' ', text)  # Replace multiple newlines with a single space
     text = re.sub(r'[“”]', '"', text).strip()
     text = re.sub(r'\.\.\.|\. \. \.', '…', text)
+    text = re.sub(r'.', '…', text)
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
 def segment_text(text, max_chars=300):
     # Split text into sentences with punctuation delimiters
-    sentences = re.split(r'([…]"?|[.,!?]"?)', text)
+    sentences = re.split(r'([…]"?|[,!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     batches = []
@@ -409,7 +410,6 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
-        text = text.replace('.', '…')
         phonemized_text = global_phonemizer.phonemize([text]) 
         phoneme_string = ' '.join(phonemized_text).strip()
         phoneme_string = phoneme_string.replace('…', '...')
