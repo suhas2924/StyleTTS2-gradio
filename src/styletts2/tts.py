@@ -80,27 +80,32 @@ def preprocess_to_ignore_quotes(text):
     return text
 
 def segment_text(text, max_chars=300):
-    # Split text into sentences with punctuation delimiters
+    # Split the text by punctuation while retaining the delimiters
     sentences = re.split(r'([.!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
-    batches = []
-    current_batch = []
+    # Calculate an approximate chunk size for balanced splitting
+    total_chars = len(text)
+    approx_chunk_size = total_chars // ((total_chars + max_chars - 1) // max_chars)
 
-    # Combine sentences into chunks within max_chars limit
+    batches = []
+    current_batch = ""
+
+    # Combine sentences into balanced chunks
     for sentence in sentences:
-        if len(" ".join(current_batch + [sentence]).encode('utf-8')) <= max_chars:
-            current_batch.append(sentence)
+        if len((current_batch + " " + sentence).encode('utf-8')) <= approx_chunk_size:
+            current_batch += " " + sentence if current_batch else sentence
         else:
             if current_batch:
-                batches.append(" ".join(current_batch).strip())
-            current_batch = [sentence]
+                batches.append(current_batch.strip())
+                current_batch = sentence
 
-    # Add remaining sentences as the final batch
+    # Add the last batch if not empty
     if current_batch:
-        batches.append(" ".join(current_batch).strip())
+        batches.append(current_batch.strip())
 
     return batches
+    
 
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
