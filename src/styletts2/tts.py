@@ -81,35 +81,29 @@ def preprocess_to_ignore_quotes(text):
 
 def segment_text(text, min_chars=200, max_chars=300):
     # Split the text by punctuation while retaining the delimiters
-    sentences = re.split(r'([.,!?]"?)', text)
+    sentences = re.split(r'([.!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     batches = []
     current_batch = ""
 
     for sentence in sentences:
-        # Calculate the current length of the batch plus the new sentence
         current_length = len(current_batch.encode('utf-8'))
         sentence_length = len(sentence.encode('utf-8'))
-        
+
+        # Add sentence to the current batch if it doesn't exceed max_chars
         if current_length + sentence_length <= max_chars:
-            # Add the sentence to the current batch
             current_batch += " " + sentence if current_batch else sentence
         else:
-            # Finalize the batch if it meets the minimum length
+            # Finalize the batch if it meets min_chars
             if current_length >= min_chars:
                 batches.append(current_batch.strip())
                 current_batch = sentence
             else:
-                # Add more sentences to meet the minimum length
+                # Add the sentence even if it exceeds max_chars to ensure inclusion
                 current_batch += " " + sentence
-            
-            # If the batch still exceeds max_chars, finalize it
-            if len(current_batch.encode('utf-8')) > max_chars:
-                batches.append(current_batch.strip())
-                current_batch = ""
 
-    # Add the last batch if not empty
+    # Add the last batch to the result
     if current_batch.strip():
         batches.append(current_batch.strip())
 
@@ -380,7 +374,6 @@ class StyleTTS2:
         # Preprocess the text (e.g., clean up quotes and spaces)
         text = preprocess_to_ignore_quotes(text)
         text_segments = segment_text(text)
-        text_segments = [re.sub(r'([,]"?\s*)$', '…', text_segment) for text_segment in text_segments]
         
         segments = []
         prev_s = None
