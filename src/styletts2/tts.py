@@ -79,33 +79,41 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_chars=200):
+def segment_text(text, min_chars=300, max_chars=400):
     # Split the text by punctuation while retaining the delimiters
     sentences = re.split(r'([.,!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
-    # Calculate an approximate chunk size for balanced splitting
-    total_chars = len(text)
-    approx_chunk_size = total_chars // ((total_chars + max_chars - 1) // max_chars)
-
     batches = []
     current_batch = ""
 
-    # Combine sentences into balanced chunks
     for sentence in sentences:
-        if len((current_batch + " " + sentence).encode('utf-8')) <= approx_chunk_size:
+        # Calculate the current length of the batch plus the new sentence
+        current_length = len(current_batch.encode('utf-8'))
+        sentence_length = len(sentence.encode('utf-8'))
+        
+        if current_length + sentence_length <= max_chars:
+            # Add the sentence to the current batch
             current_batch += " " + sentence if current_batch else sentence
         else:
-            if current_batch:
+            # Finalize the batch if it meets the minimum length
+            if current_length >= min_chars:
                 batches.append(current_batch.strip())
                 current_batch = sentence
+            else:
+                # Add more sentences to meet the minimum length
+                current_batch += " " + sentence
+            
+            # If the batch still exceeds max_chars, finalize it
+            if len(current_batch.encode('utf-8')) > max_chars:
+                batches.append(current_batch.strip())
+                current_batch = ""
 
     # Add the last batch if not empty
-    if current_batch:
+    if current_batch.strip():
         batches.append(current_batch.strip())
 
     return batches
-    
 
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
