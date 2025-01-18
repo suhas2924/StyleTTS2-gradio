@@ -73,7 +73,6 @@ def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
     text = text.replace('“', '"').replace('”', '"')
     text = text.replace('. . .', '…').replace('...', '…')
-    text = text.replace('.', '…')
     text = text.strip()
     text = re.sub(r'\n+', ' ', text)
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
@@ -82,7 +81,7 @@ def preprocess_to_ignore_quotes(text):
 
 def segment_text(text, min_chars=200, max_chars=300):
     # Split the text by punctuation while retaining the delimiters
-    sentences = re.split(r'([…!?]"?)', text)
+    sentences = re.split(r'([.,!…?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     batches = []
@@ -417,7 +416,6 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
-        text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text]) 
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
