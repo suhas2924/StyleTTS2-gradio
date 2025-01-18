@@ -79,10 +79,12 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, min_chars=200, max_chars=400):
-    sentences = re.split(r'([…!?]"?)', text)
+def segment_text(text, min_chars=200, max_chars=300):
+    # Step 1: Split text into sentences by all punctuation marks
+    sentences = re.split(r'([…!,?])', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
+    # Step 2: Compile segments, splitting only at ellipses (…) or ellipses with quotes (…")
     batches = []
     current_batch = ""
 
@@ -90,19 +92,18 @@ def segment_text(text, min_chars=200, max_chars=400):
         current_length = len(current_batch.encode('utf-8'))
         sentence_length = len(sentence.encode('utf-8'))
 
-        # Add sentence to the current batch if it doesn't exceed max_chars
         if current_length + sentence_length <= max_chars:
             current_batch += " " + sentence if current_batch else sentence
         else:
-            # Finalize the batch if it meets min_chars
-            if current_length >= min_chars:
+            # Split only if the current batch ends with ellipsis (…) or ellipsis with quotes (…")
+            if current_batch.endswith("…") or current_batch.endswith('…"'):
                 batches.append(current_batch.strip())
                 current_batch = sentence
             else:
-                # Add the sentence even if it exceeds max_chars to ensure inclusion
+                # If no ellipsis, continue adding to the current batch
                 current_batch += " " + sentence
 
-    # Add the last batch to the result
+    # Add the final batch
     if current_batch.strip():
         batches.append(current_batch.strip())
 
