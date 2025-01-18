@@ -79,8 +79,7 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, min_chars=200, max_chars=300):
-    # Split the text by punctuation while retaining the delimiters
+def segment_text(text, min_chars=300, max_chars=400):
     sentences = re.split(r'([…!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
@@ -267,6 +266,7 @@ class StyleTTS2:
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
         text = text.strip()
+        text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text]) 
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
