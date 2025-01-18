@@ -74,12 +74,11 @@ def preprocess_to_ignore_quotes(text):
     text = text.replace('“', '"').replace('”', '"')
     text = text.replace('.', '…')
     text = text.strip()
-    text = re.sub(r'\n+', ' ', text)
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, min_chars=200, max_chars=300):
+def segment_text(text, min_chars=500, max_chars=600):
     # Split the text by punctuation while retaining the delimiters
     sentences = re.split(r'([…!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
