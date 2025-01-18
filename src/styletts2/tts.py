@@ -72,6 +72,7 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
     text = text.replace('“', '"').replace('”', '"')
+    text = text.replace('...', '…').replace('. . .', '…')
     text = text.replace('.', '…')
     text = text.strip()
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
