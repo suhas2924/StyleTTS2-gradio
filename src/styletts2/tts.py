@@ -80,11 +80,9 @@ def preprocess_to_ignore_quotes(text):
     return text
 
 def segment_text(text, min_chars=200, max_chars=300):
-    # Step 1: Split text into sentences by all punctuation marks
-    sentences = re.split(r'([…,;!?]"?)', text)
+    sentences = re.split(r'([…,;:!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
-    # Step 2: Compile segments, splitting only at ellipses (…) or ellipses with quotes (…")
     batches = []
     current_batch = ""
 
@@ -95,12 +93,12 @@ def segment_text(text, min_chars=200, max_chars=300):
         if current_length + sentence_length <= max_chars:
             current_batch += " " + sentence if current_batch else sentence
         else:
-            # Split only if the current batch ends with ellipses (…) or ellipses with quotes (…")
-            if current_batch.endswith('[…]"?'):
+            # Split only if the current batch ends with ellipsis (…) or ellipsis with quotes (…")
+            if current_batch.endswith('…') or current_batch.endswith('…"'):
                 batches.append(current_batch.strip())
                 current_batch = sentence
             else:
-                # If no ellipses, continue adding to the current batch
+                # If no ellipsis, continue adding to the current batch
                 current_batch += " " + sentence
 
     # Add the final batch
