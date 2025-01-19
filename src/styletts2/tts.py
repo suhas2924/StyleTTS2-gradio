@@ -96,13 +96,10 @@ def segment_text(text, max_chars=300):
             current_batch += " " + sentence if current_batch else sentence
         else:
             # Split only if the current batch ends with ellipsis (…) or ellipsis with quotes (…")
-            if current_batch.endswith('…') or current_batch.endswith('…"'):
+            if (current_batch.endswith('…') or current_batch.endswith('…"')) and current_length <= max_chars:
                 batches.append(current_batch.strip())
                 current_batch = sentence
-            else:
-                # If the batch doesn't end with ellipsis, continue adding
-                current_batch += " " + sentence
-
+            
     # Add the final batch if it ends with ellipsis and is within max_chars
     if current_batch.strip():
         batches.append(current_batch.strip())
