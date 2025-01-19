@@ -103,7 +103,7 @@ def segment_text(text, max_chars=300):
     final_segments = []
     for segment in segments:
         # Split by punctuation, keeping it attached to sentences
-        sentences = re.split(r'([,;:!?]"?)', segment)
+        sentences = re.split(r'([…,;:!?]"?)', segment)
         sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
         combined_sentences = ["".join(sentences[i:i+2]) for i in range(0, len(sentences), 2)]
         
