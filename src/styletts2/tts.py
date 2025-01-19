@@ -80,35 +80,30 @@ def preprocess_to_ignore_quotes(text):
     return text
 
 def segment_text(text, max_chars=300):
-    # Step 1: Split the text by punctuation marks and retain the punctuation
+    # Split the text by punctuation while retaining the delimiters
     sentences = re.split(r'([…,;:!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
-    
+
+    # Initialize variables
     batches = []
     current_batch = ""
 
-    # Step 2: Process each sentence
+    # Iterate through the sentences
     for sentence in sentences:
-        # Check if the current batch can accommodate the new sentence
+        # Check if adding the sentence would exceed the max_chars limit
         if len((current_batch + " " + sentence).encode('utf-8')) <= max_chars:
-            current_batch += (" " + sentence if current_batch else sentence)
+            current_batch += " " + sentence if current_batch else sentence
         else:
-            # If the current batch ends with ellipsis (…) or ellipsis with quotes (…")
+            # If the current batch ends with ellipsis and is within max_chars, add it as a segment
             if current_batch.endswith('…') or current_batch.endswith('…"'):
-                batches.append(current_batch.strip())  # Add the batch to the list
-                current_batch = sentence  # Start a new batch with the current sentence
+                batches.append(current_batch.strip())
+                current_batch = sentence
             else:
-                # If it doesn't end with ellipsis, we should ensure this chunk ends with ellipsis
-                if sentence.endswith('…') or sentence.endswith('…"'):
-                    if len(current_batch.encode('utf-8')) + len(sentence.encode('utf-8')) <= max_chars:
-                        batches.append(current_batch.strip())  # Add the batch to the list
-                        current_batch = sentence  # Start a new batch
-                    else:
-                        # This ensures we don't exceed the max_chars limit and choose the correct ellipsis
-                        current_batch = sentence  # Start a new batch with the current sentence
+                # Continue building the current batch if not splitting
+                current_batch += " " + sentence
 
-    # Add the final batch if not empty
-    if current_batch.strip():
+    # Add the final batch if it ends with ellipsis and is within max_chars
+    if current_batch.strip() and (current_batch.endswith('…') or current_batch.endswith('…"')):
         batches.append(current_batch.strip())
 
     return batches
