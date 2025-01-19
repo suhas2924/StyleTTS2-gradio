@@ -80,32 +80,31 @@ def preprocess_to_ignore_quotes(text):
     return text
 
 def segment_text(text, max_chars=300):
-    # Step 1: Split text into sentences first
-    sentences = re.split(r'([…,;:!?]"?)', text)
+    # Step 1: Split the text into sentences based on punctuation
+    sentences = re.split(r'([…,!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
-    segments = []
+    # Step 2: Split the text into segments based on existing `…`
+    segments = re.split(r'([…]"?)', text)
+    segments = [''.join(i).strip() for i in zip(segments[0::2], segments[1::2])]
+
+    # Step 3: Combine sentences into segments respecting max_chars
+    final_segments = []
     current_segment = ""
-    
-    # Step 2: Split sentences into segments based on ellipses considering max_chars
-    for sentence in sentences:
-        sentence_parts = re.split(r'([…]"?)', sentence)  # Split sentence by ellipses
-        sentence_parts = [''.join(i).strip() for i in zip(sentence_parts[0::2], sentence_parts[1::2])]
-        
-        for part in sentence_parts:
-            # Combine parts based on max_chars
-            if len((current_segment + " " + part).encode('utf-8')) <= max_chars:
-                current_segment += " " + part if current_segment else part
-            else:
-                if current_segment:
-                    segments.append(current_segment.strip())
-                current_segment = part
+
+    for segment in segments:
+        if len((current_segment + " " + segment).encode('utf-8')) <= max_chars:
+            current_segment += " " + segment if current_segment else segment
+        else:
+            if current_segment:
+                final_segments.append(current_segment.strip())
+            current_segment = segment
 
     # Add the last segment if not empty
     if current_segment:
-        segments.append(current_segment.strip())
+        final_segments.append(current_segment.strip())
 
-    return segments
+    return final_segments
                 
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
