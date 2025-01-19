@@ -79,30 +79,36 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, min_chars=300, max_chars=400):
-    sentences = re.split(r'([…,;:!?]"?)', text)
-    sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
-    
-    segments = []
-    current_segment = ""
+def segment_text(text, max_chars=300):
+    # Step 1: Split the text by ellipses (…) with or without quotes, considering max_chars
+    segments = re.split(r'([…]"?)', text)
+    segments = [''.join(i).strip() for i in zip(segments[0::2], segments[1::2])]
 
-    for sentence in sentences:
-        # Check if adding the sentence exceeds max_chars
-        if len((current_segment + " " + sentence).strip()) <= max_chars:
-            current_segment = (current_segment + " " + sentence).strip()
+    batches = []
+    current_batch = ""
+
+    # Step 2: Split each segment into sentences based on punctuation
+    for segment in segments:
+        # Split each segment into sentences using punctuation (.,;!?)
+        sentences = re.split(r'([,;—!?])', segment)
+        sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
+
+        # Combine sentences back into a segment (no length restriction for this step)
+        segment_with_sentences = " ".join(sentences).strip()
+
+        # Step 3: Create segments based on max_chars (no sentence-related splitting)
+        if len((current_batch + " " + segment_with_sentences).encode('utf-8')) <= max_chars:
+            current_batch += " " + segment_with_sentences if current_batch else segment_with_sentences
         else:
-            # Ensure the segment ends with ellipses if possible
-            if current_segment.endswith(("…", "…\"")) or len(current_segment) >= min_chars:
-                segments.append(current_segment.strip())
-                current_segment = sentence.strip()
-            else:
-                current_segment += " " + sentence
+            if current_batch:
+                batches.append(current_batch.strip())  # Add the current batch
+            current_batch = segment_with_sentences  # Start a new batch
 
-    # Final segment
-    if current_segment.strip():
-        segments.append(current_segment.strip())
+    # Add the last batch if not empty
+    if current_batch:
+        batches.append(current_batch.strip())
 
-    return segments
+    return batches
                 
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
