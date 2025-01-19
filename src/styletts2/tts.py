@@ -80,36 +80,32 @@ def preprocess_to_ignore_quotes(text):
     return text
 
 def segment_text(text, max_chars=300):
-    # Step 1: Segment the text by ellipses (`…` or `…"`) while respecting max_chars
-    raw_segments = re.split(r'([…]"?)', text)
-    raw_segments = [''.join(i).strip() for i in zip(raw_segments[0::2], raw_segments[1::2])]
+    # Step 1: Split text into sentences first
+    sentences = re.split(r'([…,;:!?]"?)', text)
+    sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
     segments = []
     current_segment = ""
-
-    for part in raw_segments:
-        if len((current_segment + " " + part).encode('utf-8')) <= max_chars:
-            current_segment += " " + part if current_segment else part
-        else:
-            if current_segment:
-                segments.append(current_segment.strip())
-            current_segment = part
+    
+    # Step 2: Split sentences into segments based on ellipses considering max_chars
+    for sentence in sentences:
+        sentence_parts = re.split(r'([…]"?)', sentence)  # Split sentence by ellipses
+        sentence_parts = [''.join(i).strip() for i in zip(sentence_parts[0::2], sentence_parts[1::2])]
+        
+        for part in sentence_parts:
+            # Combine parts based on max_chars
+            if len((current_segment + " " + part).encode('utf-8')) <= max_chars:
+                current_segment += " " + part if current_segment else part
+            else:
+                if current_segment:
+                    segments.append(current_segment.strip())
+                current_segment = part
 
     # Add the last segment if not empty
     if current_segment:
         segments.append(current_segment.strip())
 
-    # Step 2: Split each segment into sentences by punctuation
-    final_segments = []
-    for segment in segments:
-        # Split by punctuation, keeping it attached to sentences
-        sentences = re.split(r'([…,;:!?]"?)', segment)
-        sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
-        combined_sentences = ["".join(sentences[i:i+2]) for i in range(0, len(sentences), 2)]
-        
-        final_segments.append(combined_sentences)
-
-    return final_segments
+    return segments
                 
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
