@@ -80,35 +80,34 @@ def preprocess_to_ignore_quotes(text):
     return text
 
 def segment_text(text, max_chars=300):
-    # Step 1: Split the text into segments based on ellipses (…) with or without quotes
+    # Step 1: Segment the text by ellipses (`…` or `…"`) while respecting max_chars
     raw_segments = re.split(r'([…]"?)', text)
-    segments = [''.join(i).strip() for i in zip(raw_segments[0::2], raw_segments[1::2])]
+    raw_segments = [''.join(i).strip() for i in zip(raw_segments[0::2], raw_segments[1::2])]
 
-    batches = []
-    current_batch = ""
+    segments = []
+    current_segment = ""
 
-    # Step 2: Combine segments to respect the max_chars limit
-    for segment in segments:
-        if len((current_batch + " " + segment).encode('utf-8')) <= max_chars:
-            current_batch += " " + segment if current_batch else segment
+    for part in raw_segments:
+        if len((current_segment + " " + part).encode('utf-8')) <= max_chars:
+            current_segment += " " + part if current_segment else part
         else:
-            if current_batch:
-                batches.append(current_batch.strip())
-            current_batch = segment
+            if current_segment:
+                segments.append(current_segment.strip())
+            current_segment = part
 
-    # Add the last batch if not empty
-    if current_batch:
-        batches.append(current_batch.strip())
+    # Add the last segment if not empty
+    if current_segment:
+        segments.append(current_segment.strip())
 
-    # Step 3: Further split each batch into sentences based on punctuation
+    # Step 2: Split each segment into sentences by punctuation
     final_segments = []
-    for batch in batches:
-        # Split by punctuation and retain delimiters
-        sentences = re.split(r'([,;!?]"?)', batch)
-        # Combine delimiters back with their respective sentences
+    for segment in segments:
+        # Split by punctuation, keeping it attached to sentences
+        sentences = re.split(r'([,;:!?]"?)', segment)
         sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
-        # Add all sentences for the batch
-        final_segments.append(" ".join(sentences))
+        combined_sentences = ["".join(sentences[i:i+2]) for i in range(0, len(sentences), 2)]
+        
+        final_segments.append(combined_sentences)
 
     return final_segments
                 
