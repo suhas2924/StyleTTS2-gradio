@@ -79,31 +79,36 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_chars=300):
-    # Split the text by punctuation while retaining the delimiters
+def segment_text(text, min_chars=200, max_chars=350):
+    # Split text into sentences while retaining punctuation
     sentences = re.split(r'([…,;:!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
-    # Initialize variables
     batches = []
     current_batch = ""
 
-    # Iterate through the sentences
     for sentence in sentences:
-        # Check if adding the sentence would exceed the max_chars limit
-        if len((current_batch + " " + sentence).encode('utf-8')) <= max_chars:
-            current_batch += " " + sentence if current_batch else sentence
-        else:
-            # If the current batch ends with ellipsis and is within max_chars, add it as a segment
-            if current_batch.endswith('…') or current_batch.endswith('…"'):
+        potential_batch = current_batch + (" " + sentence if current_batch else sentence)
+
+        # If potential batch exceeds max_chars, finalize the current batch
+        if len(potential_batch.encode('utf-8')) > max_chars:
+            if len(current_batch.encode('utf-8')) >= min_chars:
                 batches.append(current_batch.strip())
                 current_batch = sentence
             else:
-                # Continue building the current batch if not splitting
-                current_batch += " " + sentence
+                # Extend batch to meet min_chars, even if exceeding max_chars
+                current_batch = potential_batch
+        else:
+            current_batch = potential_batch
 
-    # Add the final batch if it ends with ellipsis and is within max_chars
-    if current_batch.strip() and (current_batch.endswith('…') or current_batch.endswith('…"')):
+        # Finalize the batch if it ends with an ellipsis
+        if current_batch.endswith('…') or current_batch.endswith('…"'):
+            if len(current_batch.encode('utf-8')) >= min_chars:
+                batches.append(current_batch.strip())
+                current_batch = ""
+
+    # Add remaining text as the last batch
+    if current_batch.strip():
         batches.append(current_batch.strip())
 
     return batches
