@@ -79,8 +79,8 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, min_chars=300, max_chars=400):
-    # Split text into sentences while retaining punctuation
+def segment_text(text, min_chars=200, max_chars=400):
+    # Split text into sentences with punctuation
     sentences = re.split(r'([…,;:—!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
@@ -90,24 +90,23 @@ def segment_text(text, min_chars=300, max_chars=400):
     for sentence in sentences:
         potential_batch = current_batch + (" " + sentence if current_batch else sentence)
 
-        # If potential batch exceeds max_chars, finalize the current batch
+        # If adding the sentence exceeds max_chars
         if len(potential_batch.encode('utf-8')) > max_chars:
-            if len(current_batch.encode('utf-8')) >= min_chars:
+            # Ensure the current batch ends with ellipsis before finalizing
+            if current_batch.endswith(('…', '…"')):
                 batches.append(current_batch.strip())
                 current_batch = sentence
             else:
-                # Extend batch to meet min_chars, even if exceeding max_chars
-                current_batch = potential_batch
+                # Backtrack to include ellipsis, ensuring min_chars is met
+                if len(current_batch.encode('utf-8')) >= min_chars:
+                    batches.append(current_batch.strip())
+                    current_batch = sentence
+                else:
+                    current_batch += " " + sentence  # Keep adding until min_chars
         else:
             current_batch = potential_batch
 
-        # Finalize the batch if it ends with an ellipsis
-        if current_batch.endswith('…') or current_batch.endswith('…"'):
-            if len(current_batch.encode('utf-8')) >= min_chars:
-                batches.append(current_batch.strip())
-                current_batch = ""
-
-    # Add remaining text as the last batch
+    # Final batch: add as-is (even without ellipses)
     if current_batch.strip():
         batches.append(current_batch.strip())
 
