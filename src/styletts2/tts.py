@@ -79,7 +79,7 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, min_chars=200, max_chars=300):
+def segment_text(text, max_chars=400):
     sentences = re.split(r'([…,;:!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
 
@@ -90,23 +90,20 @@ def segment_text(text, min_chars=200, max_chars=300):
         current_length = len(current_batch.encode('utf-8'))
         sentence_length = len(sentence.encode('utf-8'))
 
-        if current_length + sentence_length <= max_chars:
-            current_batch += " " + sentence if current_batch else sentence
+        # Split only if the current batch ends with ellipsis (…) or ellipsis with quotes (…") and is under max_chars
+        if (current_batch.endswith('…') or current_batch.endswith('…"')) and (current_length + sentence_length <= max_chars):
+            batches.append(current_batch.strip())
+            current_batch = sentence
         else:
-            # Split only if the current batch ends with ellipsis (…) or ellipsis with quotes (…")
-            if current_batch.endswith('…') or current_batch.endswith('…"'):
-                batches.append(current_batch.strip())
-                current_batch = sentence
-            else:
-                # If no ellipsis, continue adding to the current batch
-                current_batch += " " + sentence
+            # If no ellipsis, continue adding to the current batch
+            current_batch += " " + sentence
 
     # Add the final batch
     if current_batch.strip():
         batches.append(current_batch.strip())
 
     return batches
-
+                
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
         self.model = None
