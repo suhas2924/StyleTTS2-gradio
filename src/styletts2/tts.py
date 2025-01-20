@@ -79,7 +79,7 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_chars=400):
+def segment_text(text, max_chars=300):
     # Step 1: Split the text into sentences based on punctuation
     sentences = re.split(r'([…,!?]"?)', text)
     sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
