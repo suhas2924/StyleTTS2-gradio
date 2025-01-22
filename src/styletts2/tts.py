@@ -265,9 +265,9 @@ class StyleTTS2:
                 target_voice_path = cached_path(DEFAULT_TARGET_VOICE_URL)
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
-        text = text.strip()
-        text = text.replace('…', '...')
-        phonemized_text = global_phonemizer.phonemize([text]) 
+        text_segment = text_segment.strip()
+        text_segment = text_segmemt.replace('…', '...')
+        phonemized_text = global_phonemizer.phonemize([text_segment]) 
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
