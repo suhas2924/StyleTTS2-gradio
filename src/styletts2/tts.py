@@ -79,11 +79,7 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_chars=200):
-    # Step 1: Split the text into sentences based on punctuation
-    sentences = re.split(r'([…,!?]"?)', text)
-    sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
-
+def segment_text(text, max_chars=300):
     # Step 2: Split the text into segments based on existing `…`
     segments = re.split(r'([…]"?)', text)
     segments = [''.join(i).strip() for i in zip(segments[0::2], segments[1::2])]
@@ -105,6 +101,12 @@ def segment_text(text, max_chars=200):
         final_segments.append(current_segment.strip())
 
     return final_segments
+
+def sentence_split(text_segment):
+    # Split into sentences based on punctuation
+    sentences = re.split(r'([…,!?]"?)', text_segment)
+    sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
+    return [s for s in sentences if s]  # Remove empty strings
                 
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
@@ -372,6 +374,7 @@ class StyleTTS2:
         # Preprocess the text (e.g., clean up quotes and spaces)
         text = preprocess_to_ignore_quotes(text)
         text_segments = segment_text(text)
+        text_segments = [sentence_split(text_segment) for text_segment in text_segments]
         
         segments = []
         prev_s = None
