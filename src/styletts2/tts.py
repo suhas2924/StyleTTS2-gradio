@@ -103,11 +103,11 @@ def segment_text(text, max_chars=300):
     return final_segments
 
 def sentence_split(text_segment):
-    # Split into sentences based on punctuation
+    # Split the text segment into sentences based on punctuation
     sentences = re.split(r'([…,!?]"?)', text_segment)
-    sentences = [''.join(i).strip() for i in zip(sentences[0::2], sentences[1::2])]
-    return [s for s in sentences if s]  # Remove empty strings
-                
+    # Pair up the sentence fragments with punctuation
+    return [''.join(pair).strip() for pair in zip(sentences[0::2], sentences[1::2]) if ''.join(pair).strip()]
+    
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
         self.model = None
