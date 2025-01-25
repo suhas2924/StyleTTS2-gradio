@@ -105,7 +105,7 @@ def sentence_split(text_segment):
     # Split the text segment into sentences based on punctuation
     sentences = re.split(r'([.,!…?]"?)', text_segment)
     # Pair up the sentence fragments with punctuation
-    return [' '.join(pair).strip() for pair in zip(sentences[0::2], sentences[1::2]) if ''.join(pair).strip()]
+    return [''.join(pair).strip() for pair in zip(sentences[0::2], sentences[1::2]) if ''.join(pair).strip()]
     
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
@@ -372,7 +372,7 @@ class StyleTTS2:
         # Preprocess the text (e.g., clean up quotes and spaces)
         text = preprocess_to_ignore_quotes(text)
         text_segments = segment_text(text)
-        text_segments = [' '.join(sentence_split(text_segment)) for text_segment in text_segments]
+        text_segments = [''.join(sentence_split(text_segment)) for text_segment in text_segments]
         
         segments = []
         prev_s = None
