@@ -81,7 +81,7 @@ def preprocess_to_ignore_quotes(text):
 def segment_text(text, max_chars=200):
     # Step 2: Split the text into segments based on existing `…`
     segments = re.split(r'([.]"?)', text)
-    segments = [' '.join(i).strip() for i in zip(segments[0::2], segments[1::2])]
+    segments = [''.join(i).strip() for i in zip(segments[0::2], segments[1::2])]
 
     # Step 3: Combine sentences into segments respecting max_chars
     final_segments = []
