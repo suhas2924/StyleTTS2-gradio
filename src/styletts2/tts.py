@@ -1,7 +1,3 @@
-import nltk
-nltk.download('punkt_tab')
-from nltk.tokenize import word_tokenize
-
 from pathlib import Path
 import librosa
 import scipy
@@ -82,10 +78,10 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_chars=300):
+def segment_text(text, max_chars=200):
     # Step 2: Split the text into segments based on existing `…`
     segments = re.split(r'([.]"?)', text)
-    segments = [''.join(i).strip() for i in zip(segments[0::2], segments[1::2])]
+    segments = [' '.join(i).strip() for i in zip(segments[0::2], segments[1::2])]
 
     # Step 3: Combine sentences into segments respecting max_chars
     final_segments = []
@@ -109,7 +105,7 @@ def sentence_split(text_segment):
     # Split the text segment into sentences based on punctuation
     sentences = re.split(r'([.,!…?]"?)', text_segment)
     # Pair up the sentence fragments with punctuation
-    return [''.join(pair).strip() for pair in zip(sentences[0::2], sentences[1::2]) if ''.join(pair).strip()]
+    return [' '.join(pair).strip() for pair in zip(sentences[0::2], sentences[1::2]) if ''.join(pair).strip()]
     
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
@@ -270,8 +266,7 @@ class StyleTTS2:
 
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text]) 
-        ps = word_tokenize(phonemized_text[0])
-        phoneme_string = ' '.join(ps).strip()
+        phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
@@ -421,8 +416,7 @@ class StyleTTS2:
         """
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text]) 
-        ps = word_tokenize(phonemized_text[0])
-        phoneme_string = ' '.join(ps).strip()
+        phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
