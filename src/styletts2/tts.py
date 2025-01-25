@@ -73,7 +73,6 @@ def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
     text = text.replace('“', '"').replace('”', '"')
     text = text.replace('...', '…').replace('. . .', '…')
-    text = text.replace('.', '…')
     text = text.strip()
     text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
@@ -81,7 +80,7 @@ def preprocess_to_ignore_quotes(text):
 
 def segment_text(text, max_chars=300):
     # Step 2: Split the text into segments based on existing `…`
-    segments = re.split(r'([…]"?)', text)
+    segments = re.split(r'([.]"?)', text)
     segments = [''.join(i).strip() for i in zip(segments[0::2], segments[1::2])]
 
     # Step 3: Combine sentences into segments respecting max_chars
@@ -104,7 +103,7 @@ def segment_text(text, max_chars=300):
 
 def sentence_split(text_segment):
     # Split the text segment into sentences based on punctuation
-    sentences = re.split(r'([…,!?]"?)', text_segment)
+    sentences = re.split(r'([.,!…?]"?)', text_segment)
     # Pair up the sentence fragments with punctuation
     return [''.join(pair).strip() for pair in zip(sentences[0::2], sentences[1::2]) if ''.join(pair).strip()]
     
