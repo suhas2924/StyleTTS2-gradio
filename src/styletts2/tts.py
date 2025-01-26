@@ -15,7 +15,7 @@ from phonemizer.backend.espeak.wrapper import EspeakWrapper
 from phonemizer.separator import default_separator, Separator
 from phonemizer.punctuation import Punctuation
 from phonemizer import phonemize
-from espeakng import ESpeakNG
+import espeakng
 
 import os
 import re
@@ -69,12 +69,12 @@ def preprocess(wave):
 import phonemizer
 global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True, punctuation_marks=Punctuation.default_marks(), with_stress=True)
 
-espeak = ESpeakNG()
+espeak = espeakng.ESpeakNG()
 espeak.voice = 'en-us'
-espeak.options['ipa'] = True
-espeak.options['stress'] = True
-espeak.options['punctuation'] = 'all'
-espeak.options['intonation'] = True
+espeak.set_parameter(espeakng.parameter.ipa, 1)
+espeak.set_parameter(espeakng.parameter.stress, 1)
+espeak.set_parameter(espeakng.parameter.punctuation, 1)
+espeak.set_parameter(espeakng.parameter.intonation, 1)
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
