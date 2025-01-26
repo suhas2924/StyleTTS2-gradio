@@ -273,7 +273,7 @@ class StyleTTS2:
 
         text = text.strip()
         text = text.replace('…', '...')
-        phoneme_string = espeak.phonemize(text)
+        phoneme_string = espeak.synth(text)
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
