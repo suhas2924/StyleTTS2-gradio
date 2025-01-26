@@ -15,7 +15,6 @@ from phonemizer.backend.espeak.wrapper import EspeakWrapper
 from phonemizer.separator import default_separator, Separator
 from phonemizer.punctuation import Punctuation
 from phonemizer import phonemize
-import espeakng
 
 import os
 import re
@@ -68,13 +67,6 @@ def preprocess(wave):
 
 import phonemizer
 global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True, punctuation_marks=Punctuation.default_marks(), with_stress=True)
-
-espeak = espeakng.ESpeakNG()
-espeak.voice = 'en-us'
-espeak.phoneme_string = True
-espeak.stress = True
-espeak.punctuation = 'all'
-espeak.intonation = True
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
@@ -272,8 +264,8 @@ class StyleTTS2:
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
         text = text.strip()
-        text = text.replace('…', '...')
-        phoneme_string = espeak.synth(text)
+        phonemized_text = global_phonemizer.phonemize([text]) 
+        phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
