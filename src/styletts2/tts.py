@@ -67,7 +67,15 @@ def preprocess(wave):
 
 import phonemizer
 global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True, punctuation_marks=Punctuation.default_marks(), with_stress=True)
-# phonemizer = Phonemizer.from_checkpoint(str(cached_path('https://public-asai-dl-models.s3.eu-central-1.amazonaws.com/DeepPhonemizer/en_us_cmudict_ipa_forward.pt')))
+
+import espeakng
+
+espeak = espeakng.ESpeakNG()
+espeak.voice = 'en-us'
+espeak.options['ipa'] = True
+espeak.options['stress'] = True
+espeak.options['punctuation'] = 'all'
+espeak.options['intonation'] = True
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
@@ -266,8 +274,7 @@ class StyleTTS2:
 
         text = text.strip()
         text = text.replace('…', '...')
-        phonemized_text = global_phonemizer.phonemize([text]) 
-        phoneme_string = ' '.join(phonemized_text).strip()
+        phoneme_string = espeak.phonemize(text)
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
