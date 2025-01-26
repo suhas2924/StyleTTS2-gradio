@@ -71,10 +71,10 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 
 espeak = espeakng.ESpeakNG()
 espeak.voice = 'en-us'
-espeak.set_parameter(espeakng.parameter.ipa, 1)
-espeak.set_parameter(espeakng.parameter.stress, 1)
-espeak.set_parameter(espeakng.parameter.punctuation, 1)
-espeak.set_parameter(espeakng.parameter.intonation, 1)
+espeak.phoneme_string = True
+espeak.stress = True
+espeak.punctuation = 'all'
+espeak.intonation = True
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
