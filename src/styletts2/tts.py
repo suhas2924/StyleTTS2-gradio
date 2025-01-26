@@ -71,11 +71,11 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 import espeakng
 
 espeak = espeakng.ESpeakNG()
-espeak.voice = 'en-us'
-espeak.options['ipa'] = True
-espeak.options['stress'] = True
-espeak.options['punctuation'] = 'all'
-espeak.options['intonation'] = True
+espeak.voice = 'en-us' 
+espeak.set_parameter(espeakng.parameter.ipa, 1)  # Enable IPA
+espeak.set_parameter(espeakng.parameter.stress, 1)  # Enable stress
+espeak.set_parameter(espeakng.parameter.punctuation, 3)  # Set punctuation level (1=none, 2=some, 3=all)
+espeak.set_parameter(espeakng.parameter.intonation, 1)  # Enable intonation
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
@@ -274,7 +274,7 @@ class StyleTTS2:
 
         text = text.strip()
         text = text.replace('…', '...')
-        phoneme_string = espeak.phonemize(text)
+        phoneme_string = espeak.synth(text)
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
