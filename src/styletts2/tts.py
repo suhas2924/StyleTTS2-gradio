@@ -33,7 +33,6 @@ import yaml
 from txtsplit import txtsplit
 from . import models
 from . import utils
-from .text_utils import TextCleaner
 from .Utils.PLBERT.util import load_plbert
 from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSchedule
 
@@ -70,6 +69,21 @@ def preprocess(wave):
 
 import phonemizer
 global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True, punctuation_marks=Punctuation.default_marks(), with_stress=True)
+
+class TextCleaner:
+    def __init__(self):
+        pass
+    
+    def __call__(self, text):
+        # Use spaCy's tokenization to process the input text
+        doc = nlp(text)
+
+        # Create a list of tokens, including punctuation, as they are
+        tokens = [token.text for token in doc]
+
+        # Join the tokens back into a string (or return as list if needed)
+        cleaned_text = " ".join(tokens)
+        return cleaned_text
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
@@ -264,8 +278,7 @@ class StyleTTS2:
                 target_voice_path = cached_path(DEFAULT_TARGET_VOICE_URL)
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
-        text = text.replace('“', ' ').replace('”', ' ').replace('"', ' ')
-        text = text.replace('.', '…')
+        text = text.replace('“', '"').replace('”', '"')
         text = text.replace('…', '...')
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text]) 
@@ -417,8 +430,7 @@ class StyleTTS2:
         :param embedding_scale: Higher scale means style is more conditional to the input text and hence more emotional.
         :return: audio data as a Numpy array
         """
-        text = text.replace('“', ' ').replace('”', ' ').replace('"', ' ')
-        text = text.replace('.', '…')
+        text = text.replace('“', '"').replace('”', '"')
         text = text.replace('…', '...')
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text]) 
