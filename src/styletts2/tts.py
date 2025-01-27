@@ -268,9 +268,8 @@ class StyleTTS2:
         text = text.replace('…', '...')
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text]) 
-        doc = nlp(phonemized_text[0])  # phonemized_text is a list, take the first element
-        tokens = [token.text for token in doc]
-        phoneme_string = ' '.join(tokens).strip()
+        
+        phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
@@ -422,9 +421,8 @@ class StyleTTS2:
         text = text.replace('…', '...')
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text])
-        doc = nlp(phonemized_text[0])  # phonemized_text is a list, take the first element
-        tokens = [token.text for token in doc]
-        phoneme_string = ' '.join(tokens).strip()
+        
+        phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
