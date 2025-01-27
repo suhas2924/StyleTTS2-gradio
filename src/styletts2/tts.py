@@ -1,3 +1,6 @@
+import spacy
+nlp = spacy.load("en_core_web_sm")
+
 from pathlib import Path
 import librosa
 import scipy
@@ -70,29 +73,27 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
-    text = text.replace('“', '"').replace('”', '"')
     text = text.replace('...', '…').replace('. . .', '…')
     text = text.strip()
-    text = re.sub(r'\b([A-Z]{2,})\b', lambda x: x.group(0).capitalize(), text)
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_chars=300):
-    # Step 2: Split the text into segments based on existing `…`
-    segments = re.split(r'(\.|…)"?', text)
-    segments = [' '.join(i).strip() for i in zip(segments[0::2], segments[1::2])]
+def segment_text(text, max_chars=200):
+    doc = nlp(text)
+    sentences = [sent.text.strip() for sent in doc.sents]
 
-    # Step 3: Combine sentences into segments respecting max_chars
     final_segments = []
     current_segment = ""
 
-    for segment in segments:
-        if len((current_segment + " " + segment).encode('utf-8')) <= max_chars:
-            current_segment += " " + segment if current_segment else segment
+    for sentence in sentences:
+        # Check if the current segment + sentence is within max_chars
+        if len((current_segment + " " + sentence).encode('utf-8')) <= max_chars:
+            current_segment += " " + sentence if current_segment else sentence
         else:
+            # Save the current segment and start a new one
             if current_segment:
                 final_segments.append(current_segment.strip())
-            current_segment = segment
+            current_segment = sentence  # Start a new segment with the current sentence
 
     # Add the last segment if not empty
     if current_segment:
@@ -264,6 +265,9 @@ class StyleTTS2:
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
         text = text.strip()
+        text = text.replace('“', '"').replace('”', '"')
+        text = text.replace('.', '…')
+        text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text]) 
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
@@ -341,7 +345,7 @@ class StyleTTS2:
                        output_sample_rate=24000,
                        alpha=0.3,
                        beta=0.7,
-                       t=0.7,
+                       t=0.9,
                        diffusion_steps=5,
                        embedding_scale=1,
                        ref_s=None,
@@ -397,7 +401,7 @@ class StyleTTS2:
                                ref_s,
                                alpha=0.3,
                                beta=0.7,
-                               t=0.7,
+                               t=0.9,
                                diffusion_steps=5,
                                embedding_scale=1,
                                phonemize=True):
@@ -414,6 +418,8 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
+        text = text.replace('“', '"').replace('”', '"')
+        text = text.replace('.', '…')
         text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text]) 
         phoneme_string = ' '.join(phonemized_text).strip()
