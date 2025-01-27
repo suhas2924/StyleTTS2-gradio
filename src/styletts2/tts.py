@@ -33,6 +33,7 @@ import yaml
 from txtsplit import txtsplit
 from . import models
 from . import utils
+from .text_utils import TextCleaner
 from .Utils.PLBERT.util import load_plbert
 from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSchedule
 
@@ -69,20 +70,6 @@ def preprocess(wave):
 
 import phonemizer
 global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True, punctuation_marks=Punctuation.default_marks(), with_stress=True)
-
-class TextCleaner:
-    def __init__(self):
-        pass
-    
-    def __call__(self, text):
-        # Use spaCy's tokenization to process the input text
-        doc = nlp(text)
-
-        # Create a list of tokens, including punctuation, as they are
-        tokens = [token.text for token in doc]
-
-        return tokens
-
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
@@ -281,7 +268,9 @@ class StyleTTS2:
         text = text.replace('…', '...')
         text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text]) 
-        phoneme_string = ' '.join(phonemized_text).strip()
+        doc = nlp(phonemized_text[0])  # phonemized_text is a list, take the first element
+        tokens = [token.text for token in doc]
+        phoneme_string = ' '.join(tokens).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
@@ -432,8 +421,10 @@ class StyleTTS2:
         text = text.replace('“', '"').replace('”', '"')
         text = text.replace('…', '...')
         text = text.strip()
-        phonemized_text = global_phonemizer.phonemize([text]) 
-        phoneme_string = ' '.join(phonemized_text).strip()
+        phonemized_text = global_phonemizer.phonemize([text])
+        doc = nlp(phonemized_text[0])  # phonemized_text is a list, take the first element
+        tokens = [token.text for token in doc]
+        phoneme_string = ' '.join(tokens).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
