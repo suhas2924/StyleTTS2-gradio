@@ -81,9 +81,8 @@ class TextCleaner:
         # Create a list of tokens, including punctuation, as they are
         tokens = [token.text for token in doc]
 
-        # Join the tokens back into a string (or return as list if needed)
-        cleaned_text = " ".join(tokens)
-        return cleaned_text
+        return tokens
+
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', '\n').replace('\r', '\n')
