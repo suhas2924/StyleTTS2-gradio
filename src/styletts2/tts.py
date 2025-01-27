@@ -264,10 +264,10 @@ class StyleTTS2:
                 target_voice_path = cached_path(DEFAULT_TARGET_VOICE_URL)
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
-        text = text.strip()
-        text = text.replace('“', '"').replace('”', '"')
+        text = text.replace('“', ' ').replace('”', ' ')
         text = text.replace('.', '…')
         text = text.replace('…', '...')
+        text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text]) 
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
@@ -417,10 +417,10 @@ class StyleTTS2:
         :param embedding_scale: Higher scale means style is more conditional to the input text and hence more emotional.
         :return: audio data as a Numpy array
         """
-        text = text.strip()
-        text = text.replace('“', '"').replace('”', '"')
+        text = text.replace('“', ' ').replace('”', ' ')
         text = text.replace('.', '…')
         text = text.replace('…', '...')
+        text = text.strip()
         phonemized_text = global_phonemizer.phonemize([text]) 
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
