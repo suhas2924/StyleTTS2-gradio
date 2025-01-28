@@ -1,5 +1,5 @@
 import spacy
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_trf")
 
 from pathlib import Path
 import librosa
@@ -78,17 +78,7 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_length=200):
-    """
-    Segments text into chunks of approximately equal length while preserving sentence boundaries.
-    
-    Parameters:
-        text (str): The input text to be segmented.
-        max_length (int): The desired maximum length (in characters) of each segment.
-    
-    Returns:
-        List[str]: A list of segments.
-    """
+def segment_text(text, max_length=100):
     doc = nlp(text)
 
     segments = []
@@ -123,7 +113,7 @@ class StyleTTS2:
         self.sampler = DiffusionSampler(
             self.model.diffusion.diffusion,
             sampler=ADPM2Sampler(),
-            sigma_schedule=KarrasSchedule(sigma_min=0.0001, sigma_max=4.0, rho=9.0), # empirical parameters
+            sigma_schedule=KarrasSchedule(sigma_min=0.0001, sigma_max=2.0, rho=9.0), # empirical parameters
             clamp=True
         )
 
