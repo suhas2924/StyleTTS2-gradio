@@ -52,11 +52,7 @@ def get_default_model_kwargs():
 
 
 def get_default_sampling_kwargs():
-    return dict(
-        sigma_schedule=KarrasSchedule(sigma_min=0.0001, sigma_max=3.0, rho=7.0),  # Smooth noise transitions
-        sampler=ADPM2Sampler(),  # More stable sampler
-        clamp=True  # Allow full expressiveness
-    )
+    return dict(sigma_schedule=LinearSchedule(), sampler=VSampler(), clamp=True)
 
 class AudioDiffusionModel(Model1d):
     def __init__(self, **kwargs):
