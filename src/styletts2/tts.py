@@ -321,66 +321,7 @@ class StyleTTS2:
             if self.model_params.decoder.type == "hifigan":
                 asr_new = torch.zeros_like(asr)
                 asr_new[:, :, 0] = asr[:, :, 0]
-                asr_with torch.no_grad():
-            input_lengths = torch.LongTensor([tokens.shape[-1]]).to(self.device)
-            text_mask = length_to_mask(input_lengths).to(self.device)
-
-            t_en = self.model.text_encoder(tokens, input_lengths, text_mask)
-            bert_dur = self.model.bert(tokens, attention_mask=(~text_mask).int())
-            d_en = self.model.bert_encoder(bert_dur).transpose(-1, -2)
-
-            s_pred = self.sampler(noise = torch.randn((1, 256)).unsqueeze(1).to(self.device),
-                                  embedding=bert_dur,
-                                  embedding_scale=embedding_scale,
-                                  features=ref_s, # reference from the same speaker as the embedding
-                                  num_steps=diffusion_steps).squeeze(1)
-
-            s = s_pred[:, 128:]
-            ref = s_pred[:, :128]
-
-            ref = alpha * ref + (1 - alpha)  * ref_s[:, :128]
-            s = beta * s + (1 - beta)  * ref_s[:, 128:]
-
-            # duration prediction
-            d = self.model.predictor.text_encoder(d_en,
-                                                  s, input_lengths, text_mask)
-
-            x, _ = self.model.predictor.lstm(d)
-            duration = self.model.predictor.duration_proj(x)
-
-            duration = torch.sigmoid(duration).sum(axis=-1)
-            pred_dur = torch.round(duration.squeeze()).clamp(min=1)
-
-            pred_aln_trg = torch.zeros(input_lengths, int(pred_dur.sum().data))
-            c_frame = 0
-            for i in range(pred_aln_trg.size(0)):
-                pred_aln_trg[i, c_frame:c_frame + int(pred_dur[i].data)] = 1
-                c_frame += int(pred_dur[i].data)
-
-            # encode prosody
-            en = (d.transpose(-1, -2) @ pred_aln_trg.unsqueeze(0).to(self.device))
-            if self.model_params.decoder.type == "hifigan":
-                asr_new = torch.zeros_like(en)
-                asr_new[:, :, 0] = en[:, :, 0]
-                asr_new[:, :, 1:] = en[:, :, 0:-1]
-                en = asr_new
-
-            F0_pred, N_pred = self.model.predictor.F0Ntrain(en, s)
-
-            asr = (t_en @ pred_aln_trg.unsqueeze(0).to(self.device))
-            if self.model_params.decoder.type == "hifigan":
-                asr_new = torch.zeros_like(asr)
-                asr_new[:, :, 0] = asr[:, :, 0]
                 asr_new[:, :, 1:] = asr[:, :, 0:-1]
-                asr = asr_new
-
-            out = self.model.decoder(asr,
-                                     F0_pred, N_pred, ref.squeeze().unsqueeze(0))
-
-        output = out.squeeze().cpu().numpy()[..., :-50] # weird pulse at the end of the model, need to be fixed later
-        if output_wav_file:
-            scipy.io.wavfile.write(output_wav_file, rate=output_sample_rate, data=output)
-        return outputnew[:, :, 1:] = asr[:, :, 0:-1]
                 asr = asr_new
 
             out = self.model.decoder(asr,
