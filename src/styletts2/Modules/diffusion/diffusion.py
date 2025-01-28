@@ -55,7 +55,7 @@ def get_default_sampling_kwargs():
     return dict(
         sigma_schedule=KarrasSchedule(sigma_min=0.0001, sigma_max=3.0, rho=7.0),  # Smooth noise transitions
         sampler=ADPM2Sampler(),  # More stable sampler
-        clamp=False  # Allow full expressiveness
+        clamp=True  # Allow full expressiveness
     )
 
 class AudioDiffusionModel(Model1d):
