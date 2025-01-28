@@ -198,7 +198,7 @@ class StyleTTS2:
 
         return model
 
-    def compute_style(self, path, top_db=50, target_sr=24000):
+    def compute_style(self, path, top_db=30, target_sr=48000):
         wave, sr = librosa.load(path, sr=None)
         audio, _ = librosa.effects.trim(wave, top_db=top_db)
 
@@ -218,10 +218,10 @@ class StyleTTS2:
                   target_voice_path=None,
                   output_wav_file=None,
                   output_sample_rate=None,
-                  alpha=0.3,
-                  beta=0.7,
-                  diffusion_steps=5,
-                  embedding_scale=1,
+                  alpha=None,
+                  beta=None,
+                  diffusion_steps=None,
+                  embedding_scale=None,
                   ref_s=None,
                   phonemize=True):
         """
@@ -337,11 +337,11 @@ class StyleTTS2:
                        target_voice_path=None,
                        output_wav_file=None,
                        output_sample_rate=None,
-                       alpha=0.3,
-                       beta=0.7,
-                       t=0.9,
-                       diffusion_steps=5,
-                       embedding_scale=1,
+                       alpha=None,
+                       beta=None,
+                       t=0.7,
+                       diffusion_steps=None,
+                       embedding_scale=None,
                        ref_s=None,
                        phonemize=True):
         """
@@ -393,11 +393,11 @@ class StyleTTS2:
                                text,
                                prev_s,
                                ref_s,
-                               alpha=0.3,
-                               beta=0.7,
-                               t=0.9,
-                               diffusion_steps=5,
-                               embedding_scale=1,
+                               alpha=None,
+                               beta=None,
+                               t=0.7,
+                               diffusion_steps=None,
+                               embedding_scale=None,
                                phonemize=True):
         """
         Performs inference for segment of longform text; see long_inference()
