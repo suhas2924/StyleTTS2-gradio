@@ -123,7 +123,7 @@ class StyleTTS2:
         self.sampler = DiffusionSampler(
             self.model.diffusion.diffusion,
             sampler=ADPM2Sampler(),
-            sigma_schedule=KarrasSchedule(sigma_min=0.0001, sigma_max=3.0, rho=9.0), # empirical parameters
+            sigma_schedule=KarrasSchedule(sigma_min=0.0001, sigma_max=4.0, rho=9.0), # empirical parameters
             clamp=True
         )
 
@@ -202,7 +202,7 @@ class StyleTTS2:
 
         return model
 
-    def compute_style(self, path, top_db=45, target_sr=32000):
+    def compute_style(self, path, top_db=20, target_sr=24000):
         wave, sr = librosa.load(path, sr=None)
         audio, _ = librosa.effects.trim(wave, top_db=top_db)
 
