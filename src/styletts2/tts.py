@@ -198,7 +198,7 @@ class StyleTTS2:
 
         return model
 
-    def compute_style(self, path, top_db=30, target_sr=48000):
+    def compute_style(self, path, top_db=30, target_sr=None):
         wave, sr = librosa.load(path, sr=None)
         audio, _ = librosa.effects.trim(wave, top_db=top_db)
 
