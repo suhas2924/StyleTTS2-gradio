@@ -198,18 +198,13 @@ class StyleTTS2:
 
         return model
 
-
-    def compute_style(self, path):
-        """
-        Compute style vector, essentially an embedding that captures the characteristics
-        of the target voice that is being cloned
-        :param path: Path to target voice audio file
-        :return: style vector
-        """
+    def compute_style(self, path, top_db=20, target_sr=24000):
         wave, sr = librosa.load(path, sr=None)
-        audio, index = librosa.effects.trim(wave, top_db=20)
-        if sr != 24000:
-            audio = librosa.resample(audio, sr, 24000)
+        audio, _ = librosa.effects.trim(wave, top_db=top_db)
+
+        if sr != target_sr:
+            audio = librosa.resample(audio, orig_sr=sr, target_sr=target_sr)
+
         mel_tensor = preprocess(audio).to(self.device)
 
         with torch.no_grad():
@@ -217,8 +212,7 @@ class StyleTTS2:
             ref_p = self.model.predictor_encoder(mel_tensor.unsqueeze(1))
 
         return torch.cat([ref_s, ref_p], dim=1)
-
-
+        
     def inference(self,
                   text: str,
                   target_voice_path=None,
