@@ -36,7 +36,7 @@ Audio Diffusion Classes (specific for 1d audio data)
 
 def get_default_model_kwargs():
     return dict(
-        channels=128,
+        channels=256,
         patch_size=16,
         multipliers=[1, 2, 4, 4, 4, 4, 4],
         factors=[4, 4, 4, 2, 2, 2],
@@ -52,8 +52,11 @@ def get_default_model_kwargs():
 
 
 def get_default_sampling_kwargs():
-    return dict(sigma_schedule=LinearSchedule(), sampler=VSampler(), clamp=True)
-
+    return dict(
+        sigma_schedule=KarrasSchedule(sigma_min=0.01, sigma_max=3.0, rho=7.0),  # Smooth noise transitions
+        sampler=ADPM2Sampler(),  # More stable sampler
+        clamp=False  # Allow full expressiveness
+    )
 
 class AudioDiffusionModel(Model1d):
     def __init__(self, **kwargs):
