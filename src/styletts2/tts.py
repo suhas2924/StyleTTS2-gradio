@@ -206,8 +206,8 @@ class StyleTTS2:
         :param path: Path to target voice audio file
         :return: style vector
         """
-        wave, sr = librosa.load(path, sr=24000)
-        audio, index = librosa.effects.trim(wave, top_db=30)
+        wave, sr = librosa.load(path, sr=None)
+        audio, index = librosa.effects.trim(wave, top_db=20)
         if sr != 24000:
             audio = librosa.resample(audio, sr, 24000)
         mel_tensor = preprocess(audio).to(self.device)
@@ -223,7 +223,7 @@ class StyleTTS2:
                   text: str,
                   target_voice_path=None,
                   output_wav_file=None,
-                  output_sample_rate=24000,
+                  output_sample_rate=None,
                   alpha=0.3,
                   beta=0.7,
                   diffusion_steps=5,
@@ -342,7 +342,7 @@ class StyleTTS2:
                        text: str,
                        target_voice_path=None,
                        output_wav_file=None,
-                       output_sample_rate=24000,
+                       output_sample_rate=None,
                        alpha=0.3,
                        beta=0.7,
                        t=0.9,
