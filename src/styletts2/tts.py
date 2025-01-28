@@ -113,8 +113,8 @@ class StyleTTS2:
         self.sampler = DiffusionSampler(
             self.model.diffusion.diffusion,
             sampler=ADPM2Sampler(),
-            sigma_schedule=KarrasSchedule(sigma_min=0.0001, sigma_max=2.0, rho=9.0), # empirical parameters
-            clamp=True
+            sigma_schedule=KarrasSchedule(sigma_min=0.0001, sigma_max=3.0, rho=9.0), # empirical parameters
+            clamp=False
         )
 
 
