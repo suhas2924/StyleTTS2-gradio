@@ -78,35 +78,39 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_chars=200):
+def segment_text(text, max_length=200):
+    """
+    Segments text into chunks of approximately equal length while preserving sentence boundaries.
+    
+    Parameters:
+        text (str): The input text to be segmented.
+        max_length (int): The desired maximum length (in characters) of each segment.
+    
+    Returns:
+        List[str]: A list of segments.
+    """
     doc = nlp(text)
-    sentences = [sent.text.strip() for sent in doc.sents]
 
-    final_segments = []
+    segments = []
     current_segment = ""
-
-    for sentence in sentences:
-        # Check if the current segment + sentence is within max_chars
-        if len((current_segment + " " + sentence).encode('utf-8')) <= max_chars:
-            current_segment += " " + sentence if current_segment else sentence
+    
+    for sentence in doc.sents:
+        sentence_text = sentence.text.strip()
+        # Check if adding this sentence exceeds the max length
+        if len(current_segment) + len(sentence_text) + 1 <= max_length:
+            current_segment += " " + sentence_text if current_segment else sentence_text
         else:
             # Save the current segment and start a new one
             if current_segment:
-                final_segments.append(current_segment.strip())
-            current_segment = sentence  # Start a new segment with the current sentence
+                segments.append(current_segment.strip())
+            current_segment = sentence_text
 
     # Add the last segment if not empty
     if current_segment:
-        final_segments.append(current_segment.strip())
+        segments.append(current_segment.strip())
 
-    return final_segments
-
-def sentence_split(text_segment):
-    # Split the text segment into sentences based on punctuation
-    sentences = re.split(r'([.,!…?]"?)', text_segment)
-    # Pair up the sentence fragments with punctuation
-    return [''.join(pair).strip() for pair in zip(sentences[0::2], sentences[1::2]) if ''.join(pair).strip()]
-    
+    return segments
+     
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
         self.model = None
@@ -119,7 +123,7 @@ class StyleTTS2:
         self.sampler = DiffusionSampler(
             self.model.diffusion.diffusion,
             sampler=ADPM2Sampler(),
-            sigma_schedule=KarrasSchedule(sigma_min=0.0001, sigma_max=2.0, rho=11.0), # empirical parameters
+            sigma_schedule=KarrasSchedule(sigma_min=0.0001, sigma_max=3.0, rho=9.0), # empirical parameters
             clamp=False
         )
 
