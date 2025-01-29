@@ -72,11 +72,10 @@ import phonemizer
 global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True, punctuation_marks=Punctuation.default_marks(), with_stress=True)
 
 def preprocess_to_ignore_quotes(text):
-    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    text = text.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')
     text = text.replace('“', '"').replace('”', '"')
     text = text.replace('...', '…').replace('. . .', '…')
-    text = text.strip()
-    text = re.sub(r'[ \t]+', ' ', text)  # Collapsing multiple spaces/tabs into one
+    text = re.sub(r'\s+', ' ', text).strip()  # Collapsing multiple spaces/tabs into one
     return text
 
 def segment_text(text, max_length=300):
