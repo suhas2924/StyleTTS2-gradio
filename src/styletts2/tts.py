@@ -254,7 +254,6 @@ class StyleTTS2:
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
         text = text.strip()
-        text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text]) 
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
@@ -362,8 +361,7 @@ class StyleTTS2:
         # Preprocess the text (e.g., clean up quotes and spaces)
         text = preprocess_to_ignore_quotes(text)
         text_segments = segment_text(text)
-        text_segments = [re.sub(r'([.])(?=["\s]*["]?$)', '…', text_segment) for text_segment in text_segments]
-                           
+        
         segments = []
         prev_s = None
         for text_segment in text_segments:
@@ -405,7 +403,6 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
-        text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text])
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
