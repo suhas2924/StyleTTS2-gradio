@@ -63,7 +63,6 @@ def preprocess(wave):
     mel_tensor = (torch.log(1e-5 + mel_tensor.unsqueeze(0)) - mean) / std
     return mel_tensor
 
-import phonemizer
 global_phonemizer = OpenPhonemizer()
 
 def preprocess_to_ignore_quotes(text):
@@ -212,6 +211,7 @@ class StyleTTS2:
                   beta=None,
                   diffusion_steps=None,
                   embedding_scale=None,
+                  speed=None,
                   ref_s=None,
                   phonemize=True):
         """
@@ -238,6 +238,7 @@ class StyleTTS2:
                                        beta=beta,
                                        diffusion_steps=diffusion_steps,
                                        embedding_scale=embedding_scale,
+                                       speed=speed,
                                        ref_s=ref_s,
                                        phonemize=phonemize)
 
@@ -331,6 +332,7 @@ class StyleTTS2:
                        t=0.7,
                        diffusion_steps=None,
                        embedding_scale=None,
+                       speed=None,
                        ref_s=None,
                        phonemize=True):
         """
@@ -370,6 +372,7 @@ class StyleTTS2:
                                                                  t=t,
                                                                  diffusion_steps=diffusion_steps,
                                                                  embedding_scale=embedding_scale,
+                                                                 speed=speed,
                                                                  phonemize=phonemize)
             segments.append(segment_output)
         output = np.concatenate(segments)
@@ -386,6 +389,7 @@ class StyleTTS2:
                                t=0.7,
                                diffusion_steps=None,
                                embedding_scale=None,
+                               speed=None,
                                phonemize=True):
         """
         Performs inference for segment of longform text; see long_inference()
