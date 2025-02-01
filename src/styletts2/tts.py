@@ -1,5 +1,6 @@
 import spacy
 nlp = spacy.load("en_core_web_trf")
+from nltk.tokenize import word_tokenize
 
 from pathlib import Path
 import librosa
@@ -253,7 +254,8 @@ class StyleTTS2:
         text = text.replace('.', '...')
         text = text.replace('…', '...')
         phonemized_text = global_phonemizer(text) 
-        phoneme_string = ' '.join(phonemized_text).strip()
+        ps = word_tokenize(phonemized_text)
+        phoneme_string = " ".join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
@@ -407,7 +409,8 @@ class StyleTTS2:
         text = text.replace('.', '...')
         text = text.replace('…', '...')
         phonemized_text = global_phonemizer(text)
-        phoneme_string = ' '.join(phonemized_text).strip()
+        ps = word_tokenize(phonemized_text)
+        phoneme_string = " ".join(ps).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
