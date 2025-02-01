@@ -78,7 +78,7 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'\s+', ' ', text).strip()  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_length=200):
+def segment_text(text, max_length=300):
     """Splits text into segments of max_length while preserving sentence structure."""
     doc = nlp(text)
     segments = []
