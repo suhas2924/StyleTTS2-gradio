@@ -1,9 +1,5 @@
-import nltk
-nltk.download("punkt_tab")
-
 import spacy
 nlp = spacy.load("en_core_web_trf")
-from nltk.tokenize import word_tokenize
 
 from pathlib import Path
 import librosa
@@ -254,11 +250,8 @@ class StyleTTS2:
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
         text = text.strip()
-        text = text.replace('.', '...')
-        text = text.replace('…', '...')
         phonemized_text = global_phonemizer(text) 
-        ps = word_tokenize(phonemized_text)
-        phoneme_string = " ".join(ps).strip()
+        phoneme_string = " ".join([phoneme for sublist in phonemized_text for phoneme in sublist]).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
@@ -409,11 +402,8 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
-        text = text.replace('.', '...')
-        text = text.replace('…', '...')
         phonemized_text = global_phonemizer(text)
-        ps = word_tokenize(phonemized_text)
-        phoneme_string = " ".join(ps).strip()
+        phoneme_string = " ".join([phoneme for sublist in phonemized_text for phoneme in sublist]).strip()
         print (f"Phoneme: {phoneme_string}")
     
         textcleaner = TextCleaner()
