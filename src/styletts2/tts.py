@@ -73,7 +73,7 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')
-    text = text.replace('“', '"').replace('”', '"')
+    text = text.replace('“', '').replace('”', '').replace('"', '')
     text = text.replace('...', '…').replace('. . .', '…')
     text = re.sub(r'\s+', ' ', text).strip()  # Collapsing multiple spaces/tabs into one
     return text
@@ -254,6 +254,8 @@ class StyleTTS2:
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
         text = text.strip()
+        text = text.replace('.', '...')
+        text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text]) 
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
@@ -403,6 +405,8 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
+        text = text.replace('.', '...')
+        text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text])
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
