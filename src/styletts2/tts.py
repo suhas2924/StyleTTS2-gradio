@@ -1,3 +1,6 @@
+import nltk
+nltk.download("punkt_tab")
+
 import spacy
 nlp = spacy.load("en_core_web_trf")
 from nltk.tokenize import word_tokenize
