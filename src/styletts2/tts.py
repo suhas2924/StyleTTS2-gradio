@@ -12,12 +12,7 @@ torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 
 import sys
-from phonemizer.backend import EspeakBackend
-from phonemizer.backend.base import BaseBackend
-from phonemizer.backend.espeak.wrapper import EspeakWrapper
-from phonemizer.separator import default_separator, Separator
-from phonemizer.punctuation import Punctuation
-from phonemizer import phonemize
+from openphonemizer import OpenPhonemizer
 
 import os
 import re
@@ -69,11 +64,11 @@ def preprocess(wave):
     return mel_tensor
 
 import phonemizer
-global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True, punctuation_marks=Punctuation.default_marks(), with_stress=True)
+global_phonemizer = OpenPhonemizer()
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')
-    text = text.replace('“', '').replace('”', '').replace('"', '')
+    text = text.replace('“', '"').replace('”', '"')
     text = text.replace('...', '…').replace('. . .', '…')
     text = re.sub(r'\s+', ' ', text).strip()  # Collapsing multiple spaces/tabs into one
     return text
@@ -256,7 +251,7 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
-        phonemized_text = global_phonemizer.phonemize([text]) 
+        phonemized_text = global_phonemizer(text) 
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
@@ -407,7 +402,7 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
-        phonemized_text = global_phonemizer.phonemize([text])
+        phonemized_text = global_phonemizer(text)
         phoneme_string = ' '.join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
