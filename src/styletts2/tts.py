@@ -240,6 +240,64 @@ class StyleTTS2:
             ref_p = self.model.predictor_encoder(mel_tensor.unsqueeze(1))
 
         return torch.cat([ref_s, ref_p], dim=1)
+
+    def parse_speed(value) -> float:
+        """
+        Convert 'value' into a float between 0.5 and 2.0 based on custom logic.
+        Examples:
+            parse_speed("120%") -> 1.2
+            parse_speed(0.3)    -> 0.5 (clamped)
+            parse_speed(5)      -> 2.0 (clamped)
+            parse_speed("100%") -> 1.0
+            parse_speed(1)      -> 1.0
+            parse_speed(3)      -> 2.0 (clamped)
+            parse_speed(50)     -> 0.5
+            parse_speed(100)    -> 1.0
+            parse_speed(130)    -> 1.3
+            parse_speed("150")  -> 1.5
+        """
+
+        # 1) If string ends with '%', parse percentage
+        if isinstance(value, str):
+            value = value.strip()
+            if value.endswith("%"):
+                numeric_str = value[:-1].strip()  # remove '%' suffix
+                try:
+                    f = float(numeric_str)
+                except ValueError:
+                    print(
+                        f"Invalid speed format '{value}'. Falling back to default speed 1.0."
+                    )
+                    f = 100.0  # fallback to "100%" -> 1.0
+                speed = f / 100.0
+            else:
+                # It's a normal string; parse as float
+                try:
+                    f = float(value)
+                except ValueError:
+                    print(
+                        f"Invalid speed format '{value}'. Falling back to default speed 1.0."
+                    )
+                    f = 100.0  # fallback to "100" -> 1.0
+                # If f >= 10, treat as f/100. Example: 50 -> 0.5, 150 -> 1.5
+                speed = f / 100.0 if f >= 10 else f
+        else:
+            # 2) If not string, parse as float
+            try:
+                f = float(value)
+            except ValueError:
+                print(f"Invalid speed value '{value}'. Falling back to default speed 1.0.")
+                f = 1.0  # fallback to 1.0
+            # If f >= 10, treat as f/100
+            speed = f / 100.0 if f >= 10 else f
+
+        # 3) Clamp to [0.5, 2.0]
+        clamped_speed = max(0.5, min(2.0, speed))
+        if clamped_speed != speed:
+            print(f"Speed {speed} clamped to {clamped_speed}.")
+        else:
+            print(f"Parsed speed: {clamped_speed}")
+        return clamped_speed
         
     def inference(self,
                   text: str,
