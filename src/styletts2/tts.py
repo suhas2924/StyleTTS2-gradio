@@ -12,8 +12,6 @@ torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 
 import sys
-from openphonemizer import OpenPhonemizer
-
 import os
 import re
 
@@ -101,7 +99,8 @@ def preprocess(wave):
     mel_tensor = (torch.log(1e-5 + mel_tensor.unsqueeze(0)) - mean) / std
     return mel_tensor
 
-global_phonemizer = OpenPhonemizer(str(cached_path('hf://openphonemizer/autoreg-ckpt/best_model.pt'))), disable_gpu=True
+import phonemizer
+global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True,  with_stress=True)
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')
