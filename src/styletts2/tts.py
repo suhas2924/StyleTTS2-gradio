@@ -67,7 +67,7 @@ class TextCleaner:
                 print("CLEAN", text)
         return indexes
 
-textclenaer = TextCleaner()
+textcleaner = TextCleaner()
 
 #-------------------------------------------
 #Models
