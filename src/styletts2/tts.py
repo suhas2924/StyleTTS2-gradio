@@ -135,49 +135,6 @@ def segment_text(text, max_length=300):
 
     return segments
 
-def parse_speed(value) -> float:
-    # 1) If string ends with '%', parse percentage
-    if isinstance(value, str):
-        value = value.strip()
-        if value.endswith("%"):
-            numeric_str = value[:-1].strip()  # remove '%' suffix
-            try:
-                f = float(numeric_str)
-            except ValueError:
-                print(
-                    f"Invalid speed format '{value}'. Falling back to default speed 1.0."
-                )
-                f = 100.0  # fallback to "100%" -> 1.0
-            speed = f / 100.0
-        else:
-            # It's a normal string; parse as float
-            try:
-                f = float(value)
-            except ValueError:
-                print(
-                    f"Invalid speed format '{value}'. Falling back to default speed 1.0."
-                )
-                f = 100.0  # fallback to "100" -> 1.0
-            # If f >= 10, treat as f/100. Example: 50 -> 0.5, 150 -> 1.5
-            speed = f / 100.0 if f >= 10 else f
-    else:
-        # 2) If not string, parse as float
-        try:
-            f = float(value)
-        except ValueError:
-            print(f"Invalid speed value '{value}'. Falling back to default speed 1.0.")
-            f = 1.0  # fallback to 1.0
-        # If f >= 10, treat as f/100
-        speed = f / 100.0 if f >= 10 else f
-
-    # 3) Clamp to [0.5, 2.0]
-    clamped_speed = max(0.5, min(2.0, speed))
-    if clamped_speed != speed:
-        print(f"Speed {speed} clamped to {clamped_speed}.")
-    else:
-        print(f"Parsed speed: {clamped_speed}")
-    return clamped_speed
-     
 class StyleTTS2:
     def __init__(self, model_checkpoint_path=None, config_path=None, phoneme_converter='global_phonemizer'):
         self.model = None
@@ -310,8 +267,6 @@ class StyleTTS2:
         :return: audio data as a Numpy array (will also create the WAV file if output_wav_file was set).
         """
 
-        speed = parse_speed(speed)
-
         # BERT model is limited by a tensor size [1, 512] during its inference, which roughly corresponds to ~450 characters
         if len(text) > SINGLE_INFERENCE_MAX_LEN:
             return self.long_inference(text,
@@ -430,8 +385,6 @@ class StyleTTS2:
         :param ref_s: Pre-computed style vector to pass directly.
         :return: concatenated audio data as a Numpy array (will also create the WAV file if output_wav_file was set).
         """
-
-        speed = parse_speed(speed)
 
         if ref_s is None:
             # default to clone https://styletts2.github.io/wavs/LJSpeech/OOD/GT/00001.wav voice from LibriVox (public domain)
