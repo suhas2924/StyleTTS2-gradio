@@ -28,11 +28,49 @@ import yaml
 from txtsplit import txtsplit
 from . import models
 from . import utils
-from .text_utils import TextCleaner
 from .Utils.PLBERT.util import load_plbert
 from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSchedule
 
+# -----------------------------------------------------------------------------
+# CONSTANTS / CHARACTERS
+# -----------------------------------------------------------------------------
+_pad = "$"
+_punctuation = ';:,.!?¡¿—…"«»“” '
+_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+_letters_ipa = "ɑɐɒæɓʙβɔɕçɗɖðʤəɘɚɛɜɝɞɟʄɡɠɢʛɦɧħɥʜɨɪʝɭɬɫɮʟɱɯɰŋɳɲɴøɵɸθœɶʘɹɺɾɻʀʁɽʂʃʈʧʉʊʋⱱʌɣɤʍχʎʏʑʐʒʔʡʕʢǀǁǂǃˈˌːˑʼʴʰʱʲʷˠˤ˞↓↑→↗↘'̩'ᵻ"
 
+symbols = [_pad] + list(_punctuation) + list(_letters) + list(_letters_ipa)
+
+dicts = {symbols[i]: i for i in range(len(symbols))}
+
+
+# -----------------------------------------------------------------------------
+# TEXT CLEANER
+# -----------------------------------------------------------------------------
+class TextCleaner:
+    """
+    Maps individual characters to their corresponding indices.
+    If an unknown character is found, it prints a warning.
+    """
+
+    def __init__(self, dummy=None):
+        self.word_index_dictionary = dicts
+        print(len(dicts))
+
+    def __call__(self, text):
+        indexes = []
+        for char in text:
+            try:
+                indexes.append(self.word_index_dictionary[char])
+            except KeyError:
+                print("CLEAN", text)
+        return indexes
+
+textclenaer = TextCleaner()
+
+#-------------------------------------------
+#Models
+#-------------------------------------------
 LIBRI_TTS_CHECKPOINT_URL = "https://huggingface.co/yl4579/StyleTTS2-LibriTTS/resolve/main/Models/LibriTTS/epochs_2nd_00020.pth"
 LIBRI_TTS_CONFIG_URL = "https://huggingface.co/yl4579/StyleTTS2-LibriTTS/resolve/main/Models/LibriTTS/config.yml?download=true"
 
@@ -250,11 +288,10 @@ class StyleTTS2:
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
         text = text.strip()
-        phonemized_text = global_phonemizer(text) 
-        phoneme_string = " ".join([phoneme for sublist in phonemized_text for phoneme in sublist]).strip()
+        phonemized_text = global_phonemizer([text]) 
+        phoneme_string = " ".join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
-        textcleaner = TextCleaner()
         tokens = textcleaner(phoneme_string)
         tokens.insert(0, 0)
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
@@ -402,11 +439,10 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
-        phonemized_text = global_phonemizer(text)
-        phoneme_string = " ".join([phoneme for sublist in phonemized_text for phoneme in sublist]).strip()
+        phonemized_text = global_phonemizer([text])
+        phoneme_string = " ".join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
-        textcleaner = TextCleaner()
         tokens = textcleaner(phoneme_string)
         tokens.insert(0, 0)
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
