@@ -11,6 +11,9 @@ torch.manual_seed(0)
 torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 
+from phonemizer.backend import EspeakBackend
+from phonemizer.punctuation import Punctuation
+
 import sys
 import os
 import re
@@ -287,7 +290,7 @@ class StyleTTS2:
             ref_s = self.compute_style(target_voice_path)  # target style vector
 
         text = text.strip()
-        phonemized_text = global_phonemizer([text]) 
+        phonemized_text = global_phonemizer.phonemize([text]) 
         phoneme_string = " ".join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
@@ -438,7 +441,7 @@ class StyleTTS2:
         :return: audio data as a Numpy array
         """
         text = text.strip()
-        phonemized_text = global_phonemizer([text])
+        phonemized_text = global_phonemizer.phonemize([text])
         phoneme_string = " ".join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
