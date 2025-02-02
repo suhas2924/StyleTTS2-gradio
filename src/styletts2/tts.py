@@ -25,7 +25,6 @@ import numpy as np
 np.random.seed(0)
 
 import yaml
-from .text2speech import parse_speed
 
 from . import models
 from . import utils
