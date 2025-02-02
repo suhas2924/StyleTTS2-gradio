@@ -325,6 +325,8 @@ class StyleTTS2:
         :return: audio data as a Numpy array (will also create the WAV file if output_wav_file was set).
         """
 
+        speed = parse_speed(speed)
+
         # BERT model is limited by a tensor size [1, 512] during its inference, which roughly corresponds to ~450 characters
         if len(text) > SINGLE_INFERENCE_MAX_LEN:
             return self.long_inference(text,
@@ -443,6 +445,8 @@ class StyleTTS2:
         :param ref_s: Pre-computed style vector to pass directly.
         :return: concatenated audio data as a Numpy array (will also create the WAV file if output_wav_file was set).
         """
+
+        speed = parse_speed(speed)
 
         if ref_s is None:
             # default to clone https://styletts2.github.io/wavs/LJSpeech/OOD/GT/00001.wav voice from LibriVox (public domain)
