@@ -11,7 +11,7 @@ import numpy as np
 import soundfile as sf  # Alias for clarity
 import torch
 
-import tts
+from . import tts
 from txtsplit import txtsplit  # Import txtsplit
 from typing import Optional, Tuple, List
 
