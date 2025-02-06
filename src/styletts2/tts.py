@@ -281,13 +281,7 @@ class StyleTTS2:
                                        ref_s=ref_s,
                                        phonemize=phonemize)
 
-        if ref_s is None:
-            # default to clone https://styletts2.github.io/wavs/LJSpeech/OOD/GT/00001.wav voice from LibriVox (public domain)
-            if not target_voice_path or not Path(target_voice_path).exists():
-                print("Cloning default target voice...")
-                target_voice_path = cached_path(DEFAULT_TARGET_VOICE_URL)
-            ref_s = self.compute_style(target_voice_path)  # target style vector
-
+        
         text = text.strip()
         text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text]) 
@@ -387,13 +381,6 @@ class StyleTTS2:
         :return: concatenated audio data as a Numpy array (will also create the WAV file if output_wav_file was set).
         """
 
-        if ref_s is None:
-            # default to clone https://styletts2.github.io/wavs/LJSpeech/OOD/GT/00001.wav voice from LibriVox (public domain)
-            if not target_voice_path or not Path(target_voice_path).exists():
-                print("Cloning default target voice...")
-                target_voice_path = cached_path(DEFAULT_TARGET_VOICE_URL)
-            ref_s = self.compute_style(target_voice_path)  # target style vector
-            
         # Preprocess the text (e.g., clean up quotes and spaces)
         text = preprocess_to_ignore_quotes(text)
         text_segments = segment_text(text)
