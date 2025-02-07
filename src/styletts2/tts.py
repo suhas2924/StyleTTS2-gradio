@@ -89,13 +89,13 @@ to_mel = torchaudio.transforms.MelSpectrogram(
 mean, std = -4, 4
 
 
-def length_to_mask(lengths):
+def length_to_mask(lengths: torch.Tensor) -> torch.Tensor:
     mask = torch.arange(lengths.max()).unsqueeze(0).expand(lengths.shape[0], -1).type_as(lengths)
     mask = torch.gt(mask+1, lengths.unsqueeze(1))
     return mask
 
 
-def preprocess(wave):
+def preprocess(wave: np.ndarray) -> torch.Tensor:
     wave_tensor = torch.from_numpy(wave).float()
     mel_tensor = to_mel(wave_tensor)
     mel_tensor = (torch.log(1e-5 + mel_tensor.unsqueeze(0)) - mean) / std
@@ -248,13 +248,13 @@ class StyleTTS2:
                   text: str,
                   target_voice_path=None,
                   output_wav_file=None,
-                  output_sample_rate=None,
-                  alpha=None,
-                  beta=None,
-                  diffusion_steps=None,
-                  embedding_scale=None,
-                  speed=None,
-                  ref_s=None,
+                  output_sample_rate=24000,
+                  alpha=0.3,
+                  beta=0.7,
+                  diffusion_steps=5,
+                  embedding_scale=1.0,
+                  speed=1.2,
+                  ref_s=torch.Tensor,
                   phonemize=True):
         """
         Text-to-speech function
@@ -360,14 +360,14 @@ class StyleTTS2:
                        text: str,
                        target_voice_path=None,
                        output_wav_file=None,
-                       output_sample_rate=None,
-                       alpha=None,
-                       beta=None,
+                       output_sample_rate=24000,
+                       alpha=0.3,
+                       beta=0.7,
                        t=0.7,
-                       diffusion_steps=None,
-                       embedding_scale=None,
-                       speed=None,
-                       ref_s=None,
+                       diffusion_steps=5,
+                       embedding_scale=1.0,
+                       speed=1.2,
+                       ref_s=torch.Tensor,
                        phonemize=True):
         """
         Inference for longform text. Used automatically in inference() when needed.
@@ -411,12 +411,12 @@ class StyleTTS2:
                                text,
                                prev_s,
                                ref_s,
-                               alpha=None,
-                               beta=None,
+                               alpha=0.3,
+                               beta=0.7,
                                t=0.7,
-                               diffusion_steps=None,
-                               embedding_scale=None,
-                               speed=None,
+                               diffusion_steps=5,
+                               embedding_scale=1.0,
+                               speed=1.2,
                                phonemize=True):
         """
         Performs inference for segment of longform text; see long_inference()
