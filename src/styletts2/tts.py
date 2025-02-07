@@ -226,21 +226,24 @@ class StyleTTS2:
 
         return model
 
-    def compute_style(self, path, top_db=40, target_sr=24000):
-        wave, sr = librosa.load(path, sr=None)
-        audio, _ = librosa.effects.trim(wave, top_db=top_db)
+    def compute_style(path: str) -> torch.Tensor:
+        """
+        Load an audio file, trim it, resample if needed, then
+        compute and return a style vector by passing through the style encoder
+        and predictor encoder.
+        """
+        wave, sr = librosa.load(path, sr=24000)
+        audio, _ = librosa.effects.trim(wave, top_db=40)
+        if sr != 24000:
+            audio = librosa.resample(audio, sr, 24000)
 
-        if sr != target_sr:
-            audio = librosa.resample(audio, orig_sr=sr, target_sr=target_sr)
-
-        mel_tensor = preprocess(audio).to(self.device)
-
+        mel_tensor = preprocess(audio).to(device)
         with torch.no_grad():
-            ref_s = self.model.style_encoder(mel_tensor.unsqueeze(1))
-            ref_p = self.model.predictor_encoder(mel_tensor.unsqueeze(1))
+            ref_s = model.style_encoder(mel_tensor.unsqueeze(1))
+            ref_p = model.predictor_encoder(mel_tensor.unsqueeze(1))
 
         return torch.cat([ref_s, ref_p], dim=1)
-        
+    
     def inference(self,
                   text: str,
                   target_voice_path=None,
