@@ -111,7 +111,7 @@ def preprocess_to_ignore_quotes(text):
     text = re.sub(r'\s+', ' ', text).strip()  # Collapsing multiple spaces/tabs into one
     return text
 
-def segment_text(text, max_length=300):
+def segment_text(text, max_length=200):
     """Splits text into segments of max_length while preserving sentence structure."""
     doc = nlp(text)
     segments = []
@@ -352,7 +352,7 @@ class StyleTTS2:
             out = self.model.decoder(asr,
                                      F0_pred, N_pred, ref.squeeze().unsqueeze(0))
 
-        output = out.squeeze().cpu().numpy()[..., :-50] # weird pulse at the end of the model, need to be fixed later
+        output = out.squeeze().cpu().numpy()[..., :-500] # weird pulse at the end of the model, need to be fixed later
         if output_wav_file:
             scipy.io.wavfile.write(output_wav_file, rate=output_sample_rate, data=output)
         return output
