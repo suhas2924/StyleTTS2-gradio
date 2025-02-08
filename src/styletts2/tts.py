@@ -411,7 +411,7 @@ class StyleTTS2:
     def long_inference_segment(self,
                                text,
                                prev_s,
-                               ref_s,
+                               ref_s=torch.Tensor,
                                alpha=0.3,
                                beta=0.7,
                                t=0.7,
