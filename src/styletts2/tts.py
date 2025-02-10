@@ -257,9 +257,10 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
+        text = text.replace('“', '').replace('”', '').replace('"', '')
         phonemized_text = global_phonemizer.phonemize([text]) 
-        doc = nlp(phonemized_text[0])
-        ps = [token.text for token in doc]  # Using SpaCy tokenization
+        ps = word_tokenize(phonemized_text[0])
+                      
         phoneme_string = " ".join(ps).strip()
         
         print (f"Phoneme: {phoneme_string}")
@@ -408,9 +409,9 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
-        phonemized_text = global_phonemizer.phonemize([text])
-        doc = nlp(phonemized_text[0])
-        ps = [token.text for token in doc]  # Using SpaCy tokenization
+        text = text.replace('“', '').replace('”', '').replace('"', '')
+        phonemized_text = global_phonemizer.phonemize([text]) 
+        ps = word_tokenize(phonemized_text[0])
         phoneme_string = " ".join(ps).strip()
         
         print (f"Phoneme: {phoneme_string}")
