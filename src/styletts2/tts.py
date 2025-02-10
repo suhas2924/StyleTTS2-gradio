@@ -110,7 +110,6 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')
-    text = text.replace('“', '"').replace('”', '"')
     text = text.replace('...', '…').replace('. . .', '…')
     text = re.sub(r'\s+', ' ', text).strip()  # Collapsing multiple spaces/tabs into one
     return text
@@ -292,10 +291,11 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
-        text = text.replace('"', '')
         phonemized_text = global_phonemizer.phonemize([text]) 
         ps = word_tokenize(phonemized_text[0])
         phoneme_string = " ".join(ps).strip()
+        phoneme_string = phoneme_string.replace('``', '"')
+        phoneme_string = phoneme_string.replace("''", '"')
         print (f"Phoneme: {phoneme_string}")
     
         tokens = textcleaner(phoneme_string)
@@ -441,10 +441,11 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
-        text = text.replace('"', '')
         phonemized_text = global_phonemizer.phonemize([text])
         ps = word_tokenize(phonemized_text[0])
         phoneme_string = " ".join(ps).strip()
+        phoneme_string = phoneme_string.replace('``', '"')
+        phoneme_string = phoneme_string.replace("''", '"')
         print (f"Phoneme: {phoneme_string}")
     
         tokens = textcleaner(phoneme_string)
