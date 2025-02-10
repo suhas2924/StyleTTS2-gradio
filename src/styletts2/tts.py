@@ -35,7 +35,6 @@ from . import utils
 from .text_utils import TextCleaner
 from .Utils.PLBERT.util import load_plbert
 from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSchedule
-from openphonemizer import OpenPhonemizer
 
 textcleaner = TextCleaner()
 
