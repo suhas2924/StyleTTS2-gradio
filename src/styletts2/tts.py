@@ -32,42 +32,10 @@ import yaml
 
 from . import models
 from . import utils
+from .text_utils import TextCleaner
 from .Utils.PLBERT.util import load_plbert
 from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSchedule
-
-# -----------------------------------------------------------------------------
-# CONSTANTS / CHARACTERS
-# -----------------------------------------------------------------------------
-_pad = "$"
-_punctuation = ';:,.!?¡¿—…"«»“” '  # Removed single quote ('), keeping only double quote (")
-_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'"  # Moved apostrophe here
-_letters_ipa = "ɑɐɒæɓʙβɔɕçɗɖðʤəɘɚɛɜɝɞɟʄɡɠɢʛɦɧħɥʜɨɪʝɭɬɫɮʟɱɯɰŋɳɲɴøɵɸθœɶʘɹɺɾɻʀʁɽʂʃʈʧʉʊʋⱱʌɣɤʍχʎʏʑʐʒʔʡʕʢǀǁǂǃˈˌːˑʼʴʰʱʲʷˠˤ˞↓↑→↗↘'̩'ᵻ"
-
-symbols = [_pad] + list(_punctuation) + list(_letters) + list(_letters_ipa)
-
-# Create dictionary for character-to-index mapping
-dicts = {symbols[i]: i for i in range(len(symbols))}
-
-# -----------------------------------------------------------------------------
-# TEXT CLEANER
-# -----------------------------------------------------------------------------
-class TextCleaner:
-    def __init__(self, dummy=None):
-        self.word_index_dictionary = dicts
-        print(len(dicts))  # Prints total symbols mapped
-
-    def __call__(self, text):
-        indexes = []
-        for char in text:
-            if char in self.word_index_dictionary:
-                indexes.append(self.word_index_dictionary[char])
-            else:
-                print(f"Unknown character found: {char} (Unicode: {ord(char)})")
-                indexes.append(self.word_index_dictionary.get(' ', 0))  # Replace with space
-        
-        # Debugging output after processing
-        print("Processed text indices:", indexes)
-        return indexes
+from openphonemizer import OpenPhonemizer
 
 textcleaner = TextCleaner()
 
@@ -97,15 +65,13 @@ def length_to_mask(lengths: torch.Tensor) -> torch.Tensor:
     mask = torch.gt(mask+1, lengths.unsqueeze(1))
     return mask
 
-
 def preprocess(wave: np.ndarray) -> torch.Tensor:
     wave_tensor = torch.from_numpy(wave).float()
     mel_tensor = to_mel(wave_tensor)
     mel_tensor = (torch.log(1e-5 + mel_tensor.unsqueeze(0)) - mean) / std
     return mel_tensor
 
-import phonemizer
-global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True,  with_stress=True)
+global_phonemizer = OpenPhonemizer(str(cached_path('hf://openphonemizer/autoreg-ckpt/best_model.pt')))
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')
@@ -290,8 +256,8 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
-        phonemized_text = global_phonemizer.phonemize([text]) 
-        ps = word_tokenize(phonemized_text[0])
+        phonemized_text = global_phonemizer(text) 
+        ps = word_tokenize(phonemized_text)
         phoneme_string = " ".join(ps).strip()
         phoneme_string = phoneme_string.replace('``', '"')
         phoneme_string = phoneme_string.replace("''", '"')
@@ -440,8 +406,8 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
-        phonemized_text = global_phonemizer.phonemize([text])
-        ps = word_tokenize(phonemized_text[0])
+        phonemized_text = global_phonemizer(text)
+        ps = word_tokenize(phonemized_text)
         phoneme_string = " ".join(ps).strip()
         phoneme_string = phoneme_string.replace('``', '"')
         phoneme_string = phoneme_string.replace("''", '"')
