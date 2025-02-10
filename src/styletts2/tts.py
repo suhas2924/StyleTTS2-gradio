@@ -76,6 +76,7 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')
+    text = text.replace('“', '').replace('”', '').replace('"', '')
     text = text.replace('...', '…').replace('. . .', '…')
     text = re.sub(r'\s+', ' ', text).strip()  # Collapsing multiple spaces/tabs into one
     return text
@@ -257,17 +258,13 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
-        text = text.replace('“', '').replace('”', '').replace('"', '')
         phonemized_text = global_phonemizer.phonemize([text]) 
         ps = word_tokenize(phonemized_text[0])
-                      
         phoneme_string = " ".join(ps).strip()
-        
         print (f"Phoneme: {phoneme_string}")
     
         tokens = textcleaner(phoneme_string)
         tokens.insert(0, 0)
-        print (f"tokens: {tokens}")
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
 
         with torch.no_grad():
@@ -409,16 +406,13 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
-        text = text.replace('“', '').replace('”', '').replace('"', '')
         phonemized_text = global_phonemizer.phonemize([text]) 
         ps = word_tokenize(phonemized_text[0])
         phoneme_string = " ".join(ps).strip()
-        
         print (f"Phoneme: {phoneme_string}")
     
         tokens = textcleaner(phoneme_string)
         tokens.insert(0, 0)
-        print (f"tokens: {tokens}")
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
                                    
         with torch.no_grad():
