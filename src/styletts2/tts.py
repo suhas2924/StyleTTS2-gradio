@@ -71,10 +71,9 @@ def preprocess(wave: np.ndarray) -> torch.Tensor:
     mel_tensor = (torch.log(1e-5 + mel_tensor.unsqueeze(0)) - mean) / std
     return mel_tensor
 
-global_phonemizer = OpenPhonemizer(
-    str(cached_path('hf://openphonemizer/autoreg-ckpt/best_model.pt')), 
-    disable_gpu=True
-)
+# load phonemizer
+import phonemizer
+global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_punctuation=True,  with_stress=True)
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')
@@ -259,7 +258,7 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
-        phonemized_text = global_phonemizer(text) 
+        phonemized_text = global_phonemizer.phonemize([text]) 
         ps = word_tokenize(phonemized_text)
         phoneme_string = " ".join(ps).strip()
         phoneme_string = phoneme_string.replace('``', '"')
@@ -409,7 +408,7 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
-        phonemized_text = global_phonemizer(text)
+        phonemized_text = global_phonemizer.phonemize([text])
         ps = word_tokenize(phonemized_text)
         phoneme_string = " ".join(ps).strip()
         phoneme_string = phoneme_string.replace('``', '"')
