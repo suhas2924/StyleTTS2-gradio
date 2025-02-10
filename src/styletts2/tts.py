@@ -258,14 +258,15 @@ class StyleTTS2:
         text = text.replace('.', '...')
         text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text]) 
-        ps = word_tokenize(phonemized_text[0])
+        doc = nlp(phonemized_text[0])
+        ps = [token.text for token in doc]  # Using SpaCy tokenization
         phoneme_string = " ".join(ps).strip()
-        phoneme_string = phoneme_string.replace('``', '“')
-        phoneme_string = phoneme_string.replace("''", '”')
+        
         print (f"Phoneme: {phoneme_string}")
     
         tokens = textcleaner(phoneme_string)
         tokens.insert(0, 0)
+        print (f"tokens: {tokens}")
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
 
         with torch.no_grad():
@@ -408,14 +409,15 @@ class StyleTTS2:
         text = text.replace('.', '...')
         text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text])
-        ps = word_tokenize(phonemized_text[0])
+        doc = nlp(phonemized_text[0])
+        ps = [token.text for token in doc]  # Using SpaCy tokenization
         phoneme_string = " ".join(ps).strip()
-        phoneme_string = phoneme_string.replace('``', '“')
-        phoneme_string = phoneme_string.replace("''", '”')
+        
         print (f"Phoneme: {phoneme_string}")
     
         tokens = textcleaner(phoneme_string)
         tokens.insert(0, 0)
+        print (f"tokens: {tokens}")
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
                                    
         with torch.no_grad():
