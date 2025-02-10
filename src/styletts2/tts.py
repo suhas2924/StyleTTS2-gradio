@@ -39,35 +39,34 @@ from .Modules.diffusion.sampler import DiffusionSampler, ADPM2Sampler, KarrasSch
 # CONSTANTS / CHARACTERS
 # -----------------------------------------------------------------------------
 _pad = "$"
-_punctuation = ';:,.!?¡¿—…"«»“” '
-_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+_punctuation = ';:,.!?¡¿—…"«»“” '  # Removed single quote ('), keeping only double quote (")
+_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'"  # Moved apostrophe here
 _letters_ipa = "ɑɐɒæɓʙβɔɕçɗɖðʤəɘɚɛɜɝɞɟʄɡɠɢʛɦɧħɥʜɨɪʝɭɬɫɮʟɱɯɰŋɳɲɴøɵɸθœɶʘɹɺɾɻʀʁɽʂʃʈʧʉʊʋⱱʌɣɤʍχʎʏʑʐʒʔʡʕʢǀǁǂǃˈˌːˑʼʴʰʱʲʷˠˤ˞↓↑→↗↘'̩'ᵻ"
 
 symbols = [_pad] + list(_punctuation) + list(_letters) + list(_letters_ipa)
 
+# Create dictionary for character-to-index mapping
 dicts = {symbols[i]: i for i in range(len(symbols))}
-
 
 # -----------------------------------------------------------------------------
 # TEXT CLEANER
 # -----------------------------------------------------------------------------
 class TextCleaner:
-    """
-    Maps individual characters to their corresponding indices.
-    If an unknown character is found, it prints a warning.
-    """
-
     def __init__(self, dummy=None):
         self.word_index_dictionary = dicts
-        print(len(dicts))
+        print(len(dicts))  # Prints total symbols mapped
 
     def __call__(self, text):
         indexes = []
         for char in text:
-            try:
+            if char in self.word_index_dictionary:
                 indexes.append(self.word_index_dictionary[char])
-            except KeyError:
-                print("CLEAN", text)
+            else:
+                print(f"Unknown character found: {char} (Unicode: {ord(char)})")
+                indexes.append(self.word_index_dictionary.get(' ', 0))  # Replace with space
+        
+        # Debugging output after processing
+        print("Processed text indices:", indexes)
         return indexes
 
 textcleaner = TextCleaner()
