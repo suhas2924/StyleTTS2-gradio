@@ -260,8 +260,8 @@ class StyleTTS2:
         phonemized_text = global_phonemizer.phonemize([text]) 
         ps = word_tokenize(phonemized_text)
         phoneme_string = " ".join(ps).strip()
-        phoneme_string = phoneme_string.replace('``', '"')
-        phoneme_string = phoneme_string.replace("''", '"')
+        phoneme_string = phoneme_string.replace('``', '“')
+        phoneme_string = phoneme_string.replace("''", '”')
         print (f"Phoneme: {phoneme_string}")
     
         tokens = textcleaner(phoneme_string)
@@ -410,8 +410,8 @@ class StyleTTS2:
         phonemized_text = global_phonemizer.phonemize([text])
         ps = word_tokenize(phonemized_text)
         phoneme_string = " ".join(ps).strip()
-        phoneme_string = phoneme_string.replace('``', '"')
-        phoneme_string = phoneme_string.replace("''", '"')
+        phoneme_string = phoneme_string.replace('``', '“')
+        phoneme_string = phoneme_string.replace("''", '”')
         print (f"Phoneme: {phoneme_string}")
     
         tokens = textcleaner(phoneme_string)
