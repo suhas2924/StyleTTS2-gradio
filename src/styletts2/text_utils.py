@@ -23,6 +23,5 @@ class TextCleaner:
                 indexes.append(self.word_index_dictionary[char])
             except KeyError:
                 print(text)
-                # Debugging output after processing
-                print("Processed text indices:", indexes)
+                
         return indexes
