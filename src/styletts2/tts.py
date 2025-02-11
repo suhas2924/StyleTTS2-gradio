@@ -76,7 +76,7 @@ global_phonemizer = phonemizer.backend.EspeakBackend(language='en-us', preserve_
 
 def preprocess_to_ignore_quotes(text):
     text = text.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')
-    text = text.replace('“', '').replace('”', '').replace('"', '')
+    text = text.replace('“', '"').replace('”', '"')
     text = text.replace('...', '…').replace('. . .', '…')
     text = re.sub(r'\s+', ' ', text).strip()  # Collapsing multiple spaces/tabs into one
     return text
@@ -259,9 +259,8 @@ class StyleTTS2:
         text = text.replace('.', '...')
         text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text]) 
-        ps = word_tokenize(phonemized_text[0])
         
-        phoneme_string = " ".join(ps).strip()
+        phoneme_string = " ".join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
         tokens = textcleaner(phoneme_string)
@@ -298,6 +297,8 @@ class StyleTTS2:
             duration = torch.sigmoid(duration).sum(axis=-1)
             duration = duration / speed  # change speed
             pred_dur = torch.round(duration.squeeze()).clamp(min=1)
+
+            pred_dur[-1] += 5
 
             pred_aln_trg = torch.zeros(input_lengths, int(pred_dur.sum().data))
             c_frame = 0
