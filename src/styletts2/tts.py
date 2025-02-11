@@ -326,7 +326,7 @@ class StyleTTS2:
             out = self.model.decoder(asr,
                                      F0_pred, N_pred, ref.squeeze().unsqueeze(0))
 
-        output = out.squeeze().cpu().numpy()[..., :-200] # weird pulse at the end of the model, need to be fixed later
+        output = out.squeeze().cpu().numpy()[..., :-500] # weird pulse at the end of the model, need to be fixed later
         if output_wav_file:
             scipy.io.wavfile.write(output_wav_file, rate=output_sample_rate, data=output)
         return output
@@ -453,6 +453,7 @@ class StyleTTS2:
             duration = duration / speed  # change speed
             pred_dur = torch.round(duration.squeeze()).clamp(min=1)
 
+            pred_dur[-1] += 5
 
             pred_aln_trg = torch.zeros(input_lengths, int(pred_dur.sum().data))
             c_frame = 0
@@ -480,5 +481,5 @@ class StyleTTS2:
             out = self.model.decoder(asr,
                                 F0_pred, N_pred, ref.squeeze().unsqueeze(0))
 
-        return out.squeeze().cpu().numpy()[..., :-50], s_pred
+        return out.squeeze().cpu().numpy()[..., :-500], s_pred
     
