@@ -258,8 +258,8 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
-        tokens = [word_tokenize(text_segment) for text_segment in text_segments]  
-        joined_tokens = " ".join(word for tokens in tokens for word in tokens)   # Tokenizing each segment in the list
+        tokens = word_tokenize(text)
+        joined_tokens = " ".join(tokens)   # Tokenizing each segment in the list
         phonemized_text = global_phonemizer.phonemize(joined_tokens) 
         
         phoneme_string = " ".join(phonemized_text).strip()
