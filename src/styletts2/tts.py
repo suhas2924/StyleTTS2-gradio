@@ -298,8 +298,6 @@ class StyleTTS2:
             duration = duration / speed  # change speed
             pred_dur = torch.round(duration.squeeze()).clamp(min=1)
 
-            pred_dur[-1] += 3
-
             pred_aln_trg = torch.zeros(input_lengths, int(pred_dur.sum().data))
             c_frame = 0
             for i in range(pred_aln_trg.size(0)):
@@ -452,8 +450,6 @@ class StyleTTS2:
             duration = torch.sigmoid(duration).sum(axis=-1)
             duration = duration / speed  # change speed
             pred_dur = torch.round(duration.squeeze()).clamp(min=1)
-
-            pred_dur[-1] += 3
 
             pred_aln_trg = torch.zeros(input_lengths, int(pred_dur.sum().data))
             c_frame = 0
