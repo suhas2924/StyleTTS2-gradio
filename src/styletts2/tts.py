@@ -258,9 +258,10 @@ class StyleTTS2:
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
-        phonemized_text = global_phonemizer.phonemize([text]) 
-        ps = word_tokenize(phonemized_text[0])
-        phoneme_string = " ".join(ps).strip()
+        ps = word_tokenize(text[0])
+        phonemized_text = global_phonemizer.phonemize([ps]) 
+        
+        phoneme_string = " ".join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
         tokens = textcleaner(phoneme_string)
