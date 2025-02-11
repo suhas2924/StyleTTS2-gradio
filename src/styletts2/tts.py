@@ -260,7 +260,7 @@ class StyleTTS2:
         text = text.replace('…', '...')
         tokens = word_tokenize(text)
         joined_tokens = " ".join(tokens)   # Tokenizing each segment in the list
-        phonemized_text = global_phonemizer.phonemize(joined_tokens) 
+        phonemized_text = global_phonemizer.phonemize([joined_tokens]) 
         
         phoneme_string = " ".join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
