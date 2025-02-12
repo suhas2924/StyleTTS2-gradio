@@ -253,6 +253,13 @@ class StyleTTS2:
                                        speed=speed,
                                        ref_s=ref_s,
                                        phonemize=phonemize)
+            
+        if ref_s is None:
+            # default to clone https://styletts2.github.io/wavs/LJSpeech/OOD/GT/00001.wav voice from LibriVox (public domain)
+            if not target_voice_path or not Path(target_voice_path).exists():
+                print("Cloning default target voice...")
+                target_voice_path = cached_path(DEFAULT_TARGET_VOICE_URL)
+            ref_s = self.compute_style(target_voice_path)  # target style vector
 
         
         text = text.strip()
