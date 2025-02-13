@@ -309,7 +309,7 @@ class StyleTTS2:
             duration = duration / speed  # change speed
             pred_dur = torch.round(duration.squeeze()).clamp(min=1)
 
-            pred_dur += (tokens.isin([4, 16, 15]).int() * pacing)
+            pred_dur += (torch.isin(tokens, torch.tensor([3, 4, 16, 15]).to(self.device)).int() * pacing)
 
             pred_aln_trg = torch.zeros(input_lengths, int(pred_dur.sum().data))
             c_frame = 0
