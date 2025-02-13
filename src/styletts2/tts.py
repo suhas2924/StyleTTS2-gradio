@@ -1,10 +1,6 @@
 import spacy
 nlp = spacy.load("en_core_web_trf")
 
-import nltk
-nltk.download('punkt_tab')
-from nltk.tokenize import word_tokenize
-
 from pathlib import Path
 import librosa
 import scipy
@@ -264,11 +260,10 @@ class StyleTTS2:
 
         
         text = text.strip()
-        text = text.replace('.', '...')
         text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text]) 
-        ps = word_tokenize(phonemized_text[0])
-        phoneme_string = " ".join(ps).strip()
+        
+        phoneme_string = " ".join(phonemized_text).strip()
         print (f"Phoneme: {phoneme_string}")
     
         tokens = textcleaner(phoneme_string)
@@ -305,6 +300,8 @@ class StyleTTS2:
             duration = torch.sigmoid(duration).sum(axis=-1)
             duration = duration / speed  # change speed
             pred_dur = torch.round(duration.squeeze()).clamp(min=1)
+
+            pred_dur[-1] += 5
 
             pred_aln_trg = torch.zeros(input_lengths, int(pred_dur.sum().data))
             c_frame = 0
