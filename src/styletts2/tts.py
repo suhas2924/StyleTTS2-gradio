@@ -260,6 +260,7 @@ class StyleTTS2:
 
         
         text = text.strip()
+        text = text.replace('.', '...')
         text = text.replace('…', '...')
         phonemized_text = global_phonemizer.phonemize([text]) 
         
@@ -300,8 +301,6 @@ class StyleTTS2:
             duration = torch.sigmoid(duration).sum(axis=-1)
             duration = duration / speed  # change speed
             pred_dur = torch.round(duration.squeeze()).clamp(min=1)
-
-            pred_dur[-1] += 5
 
             pred_aln_trg = torch.zeros(input_lengths, int(pred_dur.sum().data))
             c_frame = 0
