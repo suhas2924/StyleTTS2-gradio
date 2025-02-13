@@ -275,6 +275,7 @@ class StyleTTS2:
     
         tokens = textcleaner(phoneme_string)
         tokens.insert(0, 0)
+        print(f"Token IDs: {tokens.tolist()}")
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
 
         with torch.no_grad():
@@ -306,7 +307,9 @@ class StyleTTS2:
 
             duration = torch.sigmoid(duration).sum(axis=-1)
             duration = duration / speed  # change speed
-            pred_dur = torch.round(duration.squeeze() * pacing).clamp(min=1)
+            pred_dur = torch.round(duration.squeeze()).clamp(min=1)
+
+            pred_dur += (tokens.isin([4, 16, 15]).int() * pacing)
 
             pred_aln_trg = torch.zeros(input_lengths, int(pred_dur.sum().data))
             c_frame = 0
