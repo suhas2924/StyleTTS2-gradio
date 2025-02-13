@@ -275,7 +275,7 @@ class StyleTTS2:
     
         tokens = textcleaner(phoneme_string)
         tokens.insert(0, 0)
-        print(f"Token IDs: {tokens.tolist()}")
+        print(f"Token IDs: {tokens}")
         tokens = torch.LongTensor(tokens).to(self.device).unsqueeze(0)
 
         with torch.no_grad():
