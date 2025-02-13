@@ -225,6 +225,7 @@ class StyleTTS2:
                   diffusion_steps=5,
                   embedding_scale=1.0,
                   speed=1.2,
+                  pacing=1.0,
                   ref_s=torch.Tensor,
                   phonemize=True):
         """
@@ -252,6 +253,7 @@ class StyleTTS2:
                                        diffusion_steps=diffusion_steps,
                                        embedding_scale=embedding_scale,
                                        speed=speed,
+                                       pacing=pacing,
                                        ref_s=ref_s,
                                        phonemize=phonemize)
             
@@ -304,7 +306,7 @@ class StyleTTS2:
 
             duration = torch.sigmoid(duration).sum(axis=-1)
             duration = duration / speed  # change speed
-            pred_dur = torch.round(duration.squeeze()).clamp(min=1)
+            pred_dur = torch.round(duration.squeeze() * pacing).clamp(min=1)
 
             pred_aln_trg = torch.zeros(input_lengths, int(pred_dur.sum().data))
             c_frame = 0
