@@ -300,7 +300,7 @@ class StyleTTS2:
 
             duration = torch.sigmoid(duration).sum(axis=-1)
             
-            pred_dur = torch.round(duration.squeeze() * speed).clamp(min=1)
+            pred_dur = torch.round(duration.squeeze() ** speed).clamp(min=1)
 
             pred_aln_trg = torch.zeros(input_lengths, int(pred_dur.sum().data))
             c_frame = 0
