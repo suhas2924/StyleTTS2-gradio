@@ -220,7 +220,7 @@ class StyleTTS2:
                   beta=0.7,
                   diffusion_steps=5,
                   embedding_scale=1.0,
-                  speed=1.2,
+                  speed=1.0,
                   ref_s=torch.Tensor,
                   phonemize=True):
         """
@@ -299,8 +299,8 @@ class StyleTTS2:
             duration = self.model.predictor.duration_proj(x)
 
             duration = torch.sigmoid(duration).sum(axis=-1)
-            duration = duration / speed  # change speed
-            pred_dur = torch.round(duration.squeeze()).clamp(min=1)
+            
+            pred_dur = torch.round(duration.squeeze() * speed).clamp(min=1)
 
             pred_aln_trg = torch.zeros(input_lengths, int(pred_dur.sum().data))
             c_frame = 0
