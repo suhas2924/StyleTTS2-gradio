@@ -192,25 +192,24 @@ class StyleTTS2:
 
         return model
 
-    def compute_style(self, path) -> torch.Tensor:
+    def compute_style(path: str) -> torch.Tensor:
         """
-        Compute style vector, essentially an embedding that captures the characteristics
-        of the target voice that is being cloned
-        :param path: Path to target voice audio file
-        :return: style vector
+        Load an audio file, trim it, resample if needed, then
+        compute and return a style vector by passing through the style encoder
+        and predictor encoder.
         """
         wave, sr = librosa.load(path, sr=24000)
-        audio, index = librosa.effects.trim(wave, top_db=40)
+        audio, _ = librosa.effects.trim(wave, top_db=30)
         if sr != 24000:
             audio = librosa.resample(audio, sr, 24000)
-        mel_tensor = preprocess(audio).to(self.device)
 
+        mel_tensor = preprocess(audio).to(device)
         with torch.no_grad():
-            ref_s = self.model.style_encoder(mel_tensor.unsqueeze(1))
-            ref_p = self.model.predictor_encoder(mel_tensor.unsqueeze(1))
+            ref_s = model.style_encoder(mel_tensor.unsqueeze(1))
+            ref_p = model.predictor_encoder(mel_tensor.unsqueeze(1))
 
         return torch.cat([ref_s, ref_p], dim=1)
-
+    
     def inference(self,
                   text: str,
                   target_voice_path=None,
@@ -251,14 +250,6 @@ class StyleTTS2:
                                        ref_s=ref_s,
                                        phonemize=phonemize)
             
-        if ref_s is None:
-            # default to clone https://styletts2.github.io/wavs/LJSpeech/OOD/GT/00001.wav voice from LibriVox (public domain)
-            if not target_voice_path or not Path(target_voice_path).exists():
-                print("Cloning default target voice...")
-                target_voice_path = cached_path(DEFAULT_TARGET_VOICE_URL)
-            ref_s = self.compute_style(target_voice_path)  # target style vector
-
-        
         text = text.strip()
         text = text.replace('.', '...')
         text = text.replace('…', '...')
